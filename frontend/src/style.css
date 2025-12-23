@@ -1,0 +1,25 @@
+@import 'bulma/css/bulma.min.css';
+
+:root {
+  --primary-color: #3273dc;
+  --danger-color: #f14668;
+  --success-color: #48c774;
+  --warning-color: #ffdd57;
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  min-height: 100vh;
+}
+
+html, body, #app {
+  height: 100%;
+}
+
