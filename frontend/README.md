@@ -1,319 +1,125 @@
-# 📁 TTBA Upload - Application Complète
+# 📁 TTBA Upload & Party Game (Frontend)
 
-> Application Vue.js 3 + TypeScript pour charger, filtrer et soumettre des fichiers JSON volumineux (100+ MB)
+Ce dépôt contient le frontend Vue 3 + TypeScript de l'application TTBA — à la fois un outil d'upload/filtrage de JSON volumineux et un petit jeu de soirée (TTBA Game) qui utilise des vidéos TikTok intégrées.
 
-## ✨ Fonctionnalités Principales
+---
 
-### 🚀 Charge de Fichiers Volumineux
-- Support de fichiers JSON jusqu'à 100+ MB
-- Barre de progression en temps réel
-- Traitement optimisé et non-bloquant
-- Détection automatique du format (array ou object)
+## ⚙️ État actuel
+- Frontend : Vue 3 (Composition API) + TypeScript
+- UI : Bulma + styles custom
+- Build : Vite
+- Nouvelle fonctionnalité : mode *Partie* (jeu de soirée) avec embed TikTok responsive + fallback si l'iframe est bloquée
+- `.gitignore` mis à jour à la racine du repo pour ignorer node_modules, builds et fichiers IDE
 
-### 🎯 Sélection Intelligente des Données
-- Affichage dynamique de tous les champs disponibles
-- Sélection/désélection cliquable des champs
-- "Sélectionner tous" pour rapidité
-- Compteur des champs sélectionnés
+---
 
-### 📊 Aperçu et Statistiques
-- Prévisualisation des 3 premiers éléments filtrés
-- Mise à jour en temps réel selon la sélection
-- Statistiques du fichier (nombre d'objets, taille)
-- Formatage JSON lisible avec indentation
+## 🚀 Installation (développement)
+1. Ouvrir un terminal
+2. Aller dans le dossier frontend :
 
-### ✅ Soumission Filtrée
-- Envoi uniquement des champs sélectionnés
-- Réduction drastique de la taille des données
-- Messages de confirmation clairs
-- Gestion complète des erreurs
-
-## 🛠️ Stack Technologique
-
-```
-Frontend: Vue.js 3 (Composition API) + TypeScript (Strict)
-UI: Bulma CSS + Custom Styles
-Build: Vite
-Server: Backend sur http://localhost:5000/api/upload
-```
-
-## 📦 Installation
-
-```bash
+```powershell
 cd frontend
 npm install
 ```
 
-## 🚀 Utilisation
+3. Lancer le serveur de développement :
 
-### Mode Développement
-```bash
+```powershell
 npm run dev
 ```
-L'application s'ouvre automatiquement sur `http://localhost:5173`
 
-### Build Production
-```bash
-npm run build
-```
+L'app est servie par Vite (par défaut `http://localhost:5173`).
 
-### Type Checking
-```bash
-npm run type-check
-```
+---
 
-## 📚 Documentation
+## 🧭 Fonctionnalités principales
+- Upload et traitement de fichiers JSON volumineux (progress bar, traitement non bloquant)
+- Sélection des champs à conserver avant la soumission
+- Prévisualisation des premiers éléments
+- Envoi des données filtrées vers le backend (endpoint attendu : `http://localhost:5000/api/upload`)
+- Mode Jeu (TTBA Game) : sélection aléatoire de vidéos extraites, quiz « Qui a aimé / Qui a envoyé ? »
+  - Embed TikTok responsive (lazy-load)
+  - Fallback si l'iframe est bloquée : affiche un bouton « Ouvrir sur TikTok »
+- Micro-interactions et animations (boutons, transitions, effets gagnant/perdant)
 
-| Fichier | Description |
-|---------|-------------|
-| `QUICK_START.md` | Guide de démarrage rapide ⚡ |
-| `USAGE_GUIDE.md` | Guide d'utilisation détaillé 📖 |
-| `CHANGELOG.md` | Historique des changements 📋 |
-| `TEST_FILES.md` | Génération de fichiers de test 🧪 |
-| `SUMMARY.md` | Résumé technique 📊 |
+---
 
-## 🎨 Interface Utilisateur
+## 🎮 Mode Jeu (nouveau)
+- À partir de la page principale, après avoir chargé des données (players), cliquez sur "🚀 Lancer la partie".
+- L'application choisit aléatoirement une vidéo (aimée ou partagée) et affiche l'embed TikTok.
+- Si l'iframe est empêchée par une extension / CSP, l'interface affichera un fallback et permettra d'ouvrir la vidéo sur TikTok.
+- Les boutons des joueurs ont des micro-transitions et indiquent immédiatement le résultat (vert = correct, rouge = incorrect).
 
-```
-┌────────────────────────────────────────┐
-│     📁 TTBA Upload                     │
-│  Téléchargez un fichier JSON volum...  │
-└────────────────────────────────────────┘
+Notes techniques :
+- L'iframe est lazy-loaded (assignation du `src` depuis `data-src` au moment opportun) pour améliorer les performances.
+- Si votre site sert une Content-Security-Policy stricte, autorisez `https://www.tiktok.com` dans `frame-src` / `child-src` si vous voulez permettre l'embed direct.
 
-┌─ SÉLECTION DE FICHIER ─────────────────┐
-│  [Choisir un fichier...] data.json     │
-└────────────────────────────────────────┘
+---
 
-┌─ CHAMPS DISPONIBLES ───────────────────┐
-│  ☑ Sélectionner tous                   │
-│  [id] [name] [email] [phone] ...       │
-│  3 champ(s) sélectionné(s)             │
-└────────────────────────────────────────┘
+## 🔬 Tests rapides / smoke tests
+- Vérifier que l'app démarre sans erreurs : `npm run dev` et ouvrir la console du navigateur.
+- Charger un JSON d'exemple (voir `example-data.json`) pour peupler la liste des joueurs.
+- Lancer une partie, vérifier :
+  - L'iframe charge la vidéo et s'anime.
+  - Si bloquée, le fallback apparaît et le bouton ouvre la vidéo dans un nouvel onglet.
+  - Les boutons joueurs s'animent et mettent à jour le score.
+- Tester responsive sur mobile / narrow viewport : l'embed garde un ratio correct.
 
-┌─ APERÇU DES DONNÉES ───────────────────┐
-│  [{"id": 1, "name": "Alice", ...}]    │
-│  [{"id": 2, "name": "Bob", ...}]      │
-│  [{"id": 3, "name": "Charlie", ...}]  │
-└────────────────────────────────────────┘
+---
 
-┌─ INFORMATIONS ────────────────────────┐
-│  Éléments: 1,000,000 | Taille: 100 MB │
-└────────────────────────────────────────┘
+## 🛠️ Scripts utiles
+- Développement : `npm run dev`
+- Build production : `npm run build`
+- Type check : `npm run type-check` (si configuré)
+- Lint (si configuré) : `npm run lint`
 
-   [📤 Soumettre] [✖️ Annuler]
-```
+---
 
-## 📝 Exemple d'Utilisation
+## 🔁 Backend attendu
+- URL : `http://localhost:5000`
+- Endpoint : `POST /api/upload`
+- Content-Type : `application/json`
+- Payload : Array<Object> (les objets filtrés côté client)
 
-### 1. Charger un Fichier
+Exemple de réponse attendue :
 ```json
-// data.json (100 MB, 1 million d'objets)
-[
-  {
-    "id": 1,
-    "name": "Alice",
-    "email": "alice@example.com",
-    "phone": "+336...",
-    "department": "Engineering",
-    "salary": 75000,
-    // ... 5 autres champs non nécessaires
-  },
-  // ... 999,999 autres objets
-]
-```
-
-### 2. Sélectionner les Champs
-```
-✅ id
-✅ name
-✅ email
-❌ phone
-❌ department
-❌ salary
-```
-
-### 3. Soumettre les Données Filtrées
-```json
-// Envoyé au serveur (30 MB)
-[
-  {
-    "id": 1,
-    "name": "Alice",
-    "email": "alice@example.com"
-  },
-  // ... 999,999 autres objets (3 champs seulement)
-]
-```
-
-**Économie: 70% de bande passante** 🎉
-
-## 🔧 Configuration Serveur
-
-Assurez-vous que votre serveur backend:
-
-```
-Écoute sur: http://localhost:5000
-Endpoint: /api/upload
-Méthode: POST
-Content-Type: application/json
-
-Payload reçu: Array<Object> des données filtrées
-```
-
-Exemple de réponse:
-```json
-{
-  "success": true,
-  "itemsProcessed": 1000000,
-  "fieldsReceived": 3,
-  "timestamp": "2025-12-22T10:30:00Z"
-}
-```
-
-## 📊 Types TypeScript
-
-```typescript
-interface FileStats {
-  totalItems: string
-  fileSize: string
-}
-
-interface JsonArray extends Array<Record<string, unknown>> {}
-
-// Tous les refs sont typés strictement
-ref<HTMLInputElement | null>
-ref<string>
-ref<JsonArray | null>
-ref<string[]>
-ref<boolean>
-ref<number>
-ref<FileStats>
-```
-
-## ✅ Validation & Erreurs
-
-### Validations
-- ✓ Fichier doit être au format `.json`
-- ✓ JSON doit être valide
-- ✓ JSON doit être un array ou un objet avec un array
-- ✓ Au moins un champ doit être sélectionné
-
-### Messages d'Erreur
-- "Veuillez sélectionner un fichier JSON" - Format invalide
-- "Le fichier JSON est invalide" - JSON mal formé
-- "Le fichier ne contient pas de tableau JSON" - Structure non reconnue
-- "Erreur lors de la soumission" - Serveur indisponible
-
-## 🧪 Fichiers de Test
-
-### Fournis
-- `example-data.json` - 5 éléments (~2 KB)
-
-### À Générer
-- Voir `TEST_FILES.md` pour générer des fichiers volumineux
-- Scripts fournis pour PowerShell et Node.js
-- Générez 1 million d'objets (~100 MB)
-
-## 🚀 Performance
-
-### Build Production
-```
-✓ 13 modules transformed
-  - HTML: 0.40 kB (gzip: 0.29 kB)
-  - CSS: 679.78 kB (gzip: 66.57 kB)
-  - JS: 66.48 kB (gzip: 26.61 kB)
-✓ Compilation en 872ms
-```
-
-### Taille Réduite
-- Application complète + Bulma: ~66 KB (non compressé)
-- Avec gzip: ~26 KB
-- Temps de chargement: < 1 seconde
-
-## 🎯 Cas d'Utilisation Réels
-
-1. **Exportation de Base de Données**
-   - Entrée: Export complet (100 MB)
-   - Sortie: Données filtrées pour API (30 MB)
-
-2. **Logs d'Application**
-   - Entrée: Tous les logs détaillés (100 MB)
-   - Sortie: Logs critiques seulement (20 MB)
-
-3. **Données Analytiques**
-   - Entrée: Données brutes avec metadata (100 MB)
-   - Sortie: KPIs nécessaires (40 MB)
-
-4. **Synchronisation de Données**
-   - Entrée: Full export (100 MB)
-   - Sortie: Delta sync seulement (10 MB)
-
-## ✨ Points Forts
-
-✅ **Optimisé pour les fichiers volumineux**
-- Traitement progressif
-- Filtrage côté client
-- Réduction de 60-75% de la taille
-
-✅ **Type-Safe**
-- TypeScript Strict Mode
-- Zéro erreur de compilation
-- Intellisense complet
-
-✅ **User-Friendly**
-- Interface intuitive
-- Feedback visuel en temps réel
-- Messages clairs et en français
-
-✅ **Production-Ready**
-- Build optimisé
-- Gestion complète des erreurs
-- Tests de compilation réussis
-
-## 📋 Checklist Avant Utilisation
-
-- [ ] Node.js ≥ 14 installé
-- [ ] npm ≥ 6 installé
-- [ ] Dépendances installées (`npm install`)
-- [ ] TypeScript compile (`npm run type-check`)
-- [ ] Build réussit (`npm run build`)
-- [ ] Serveur backend écoute sur port 5000 (optionnel)
-
-## 🐛 Dépannage
-
-**Port 5173 occupé**
-> Vite utilisera le prochain port disponible automatiquement
-
-**"Erreur lors de la soumission"**
-> Vérifiez que le serveur backend écoute sur `localhost:5000`
-
-**"Fichier JSON invalide"**
-> Le fichier doit être valide et contenir un array ou un object avec array
-
-## 📞 Support
-
-Consultez les fichiers de documentation:
-- `QUICK_START.md` pour démarrer rapidement
-- `USAGE_GUIDE.md` pour l'utilisation complète
-- `TEST_FILES.md` pour générer des données de test
-- `CHANGELOG.md` pour l'historique des modifications
-
-## 📄 Licence
-
-Ce projet est fourni à titre d'exemple. Utilisez librement.
-
-## 🎉 Bon Développement!
-
-L'application est prête à l'emploi. Lancez `npm run dev` et commencez!
-
-```bash
-npm run dev
+{ "success": true, "itemsProcessed": 12345 }
 ```
 
 ---
 
-**Version**: 1.0.0  
-**Status**: ✅ Production-Ready  
-**Last Updated**: 2025-12-22  
-**Tech**: Vue 3 + TypeScript + Bulma + Vite
+## 📌 Notes & problèmes connus
+- Si vous voyez un placeholder/fallback à la place de la vidéo, c'est probablement dû à :
+  - une extension navigateur bloquant les iframes (uBlock, Ghostery, etc.),
+  - ou une CSP côté serveur qui n'autorise pas l'embed TikTok.
+- Le fallback propose d'ouvrir la vidéo directement sur TikTok (nouvelle fenêtre).
 
+---
+
+## ✅ Changelog rapide (modifications récentes)
+- Ajout du mode Jeu (TTBA Game) avec embed TikTok responsive + fallback
+- Ajout d'animations / micro-interactions sur les boutons et titres
+- Correction de bindings Vue (`ref` usage, lazy-load iframe)
+- Mise à jour du `.gitignore` à la racine
+
+---
+
+## 📚 Documentation additionnelle
+Pour plus de détails fonctionnels (gestion des gros fichiers, génération de fichiers de test, guides rapides), consultez les documents du dossier `frontend` :
+- `QUICK_START.md` — démarrage rapide
+- `USAGE_GUIDE.md` — guide utilisateur
+- `TEST_FILES.md` — génération de jeux de données volumineux
+- `CHANGELOG.md` — historique
+
+---
+
+## ✅ Prochaine étape (si vous voulez que je continue)
+- Scanner automatiquement les composants `frontend/src/**/*.vue` pour lister les endroits où la nouvelle direction artistique (DA) n'a pas été appliquée, proposer patches.
+- Extraire les styles communs vers `frontend/src/style.css` pour réutilisation globale.
+- Ajouter un petit test unitaire pour la logique de sélection de la vidéo (runNewGame / selectPlayer).
+
+Souhaitez‑vous que je lance le scan automatique maintenant et prépare les patches (proposition recommandée) ?
+
+---
+
+**Version frontend**: mise à jour 2025-12-23
