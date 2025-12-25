@@ -5,6 +5,7 @@ export interface Player {
   username: string
   likedVideos: string[]
   sharedVideos: Array<{ video:string, sentAt: string }>
+  susNumber: number
 }
 
 const STORAGE_KEY = 'ttbaPlayer'

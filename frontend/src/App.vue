@@ -3,7 +3,7 @@
     <section class="hero is-fullheight is-gradient">
       <div class="hero-body">
         <div class="container is-fluid">
-          <h1 class="title is-2 has-text-centered mb-5 main-title" style="color: white;">🎮 TTBA Game</h1>
+          <h1 class="title is-2 has-text-centered mb-5 main-title">🎮 TTBA Game</h1>
 
           <div class="initGame" v-if="!isRunningGame">
             <div class="columns">
@@ -41,7 +41,9 @@
                   <!-- Loading Progress -->
                   <div v-if="fileState.isProcessing" class="mt-5 loading-section">
                     <progress class="progress is-primary progress-bar" :value="fileState.progress" max="100"></progress>
-                    <p class="has-text-centered mt-3 loading-text">⏳ Traitement du fichier... {{ fileState.progress }}%</p>
+                    <p class="has-text-centered mt-3 loading-text">⏳ Traitement du fichier... {{
+                        fileState.progress
+                      }}%</p>
                   </div>
 
                   <!-- Results Section -->
@@ -54,19 +56,65 @@
                   </div>
 
                   <!-- Error Messages -->
-                  <div class="notification is-danger error-notification mt-4" v-if="errorMessage">
+                  <div class="notification is-danger error-notification mt-4" v-if="errorMessage" role="status">
                     <button class="delete" @click="errorMessage = ''"></button>
                     {{ errorMessage }}
                   </div>
                 </div>
 
-                <div v-if="players.length > 0" class="mt-4">
-                  <button
-                      class="button is-fullwidth is-success launch-btn" style="height: 200px"
-                      @click="runNewGame();"
-                  >
-                    🚀 Lancer la partie
-                  </button>
+                <div class="box has-shadow options-list">
+                  <div class="content has-text-centered mb-5 options-animated">
+                    <p class="subtitle is-5 upload-title">⚙️ Options de jeu</p>
+                    <div class="columns is-vcentered">
+                      <div class="column">
+                        <label class="label">Options de TikToks</label>
+                        <div class="control">
+                          <div class="select is-fullwidth animated-select">
+                            <select v-model="options.tiktokOption">
+                              <option>Like et partage</option>
+                              <option>Like</option>
+                              <option>Partage</option>
+                            </select>
+                          </div>
+                        </div>
+
+                        <label class="label mt-4">Activer le #sus mode</label>
+                        <div class="field">
+                          <button class="toggle-switch" :class="{ 'on': options.susMode }" @click="toggleSusMode"
+                                  @keydown.space.prevent="toggleSusMode" @keydown.enter.prevent="toggleSusMode"
+                                  type="button" :aria-pressed="options.susMode" aria-label="Activer le mode sus">
+                            <span class="switch-track"></span>
+                            <span class="switch-thumb"></span>
+                          </button>
+                          <span class="ml-3 hint">{{ options.susMode ? 'Activé' : 'Désactivé' }}</span>
+                        </div>
+
+                      </div>
+
+                      <div class="column is-7" v-show="options.tiktokOption !== 'Like'">
+                        <label class="label">Whitelist (utilisateurs détectés)</label>
+                        <div class="whitelist-list control">
+                          <template v-if="sharedUsersSorted.length === 0">
+                            <p class="has-text-grey is-size-7">Aucun utilisateur détecté</p>
+                          </template>
+                          <template v-else>
+                            <div class="tags has-addons is-flex-wrap-wrap">
+                              <span v-for="(sharedUser, idx) in sharedUsersSorted" :key="sharedUser + '-' + idx"
+                                    class="tag is-light whitelist-tag">
+                                <label class="checkbox inline-checkbox">
+                                  <input type="checkbox" :checked="isWhitelisted(sharedUser)"
+                                         @change.prevent="toggleWhitelistUser(sharedUser)">
+                                  <span class="tag-label">{{ sharedUser }}</span>
+                                </label>
+                              </span>
+                            </div>
+                          </template>
+                        </div>
+                        <p class="is-size-7 mt-2 has-text-grey">La whitelist permet de prioriser/filtrer les vidéos
+                          issues de ces envoyeurs.</p>
+                      </div>
+                    </div>
+                  </div>
                 </div>
 
 
@@ -76,16 +124,17 @@
               <div class="column is-half">
                 <div class="box has-shadow data-box">
                   <div class="content has-text-centered mb-5">
-                    <p class="subtitle is-5 data-title">📊 Données Sauvegardées ({{ players.length }})</p>
+                    <p class="subtitle is-5 data-title">📊 Joueurs sauvegardées ({{ players.length }})</p>
                   </div>
 
                   <div v-if="players.length === 0" class="content has-text-centered empty-state">
                     <p class="has-text-grey empty-text">🎭 Aucune donnée pour le moment</p>
-                    <p class="has-text-grey is-size-7">Chargez des fichiers JSON pour commencer</p>
+                    <p class="has-text-grey is-size-7">Chargez des fichiers JSON pour commencer la partie</p>
                   </div>
 
                   <div v-else class="content results-list">
-                    <div v-for="(item, index) in players" :key="index" class="box mb-3 user-card player-card">
+                    <div v-for="(item, index) in players" :key="item.username || index"
+                         class="box mb-3 user-card player-card">
                       <div class="card-header">
                         <p class="has-text-weight-bold mb-2 card-number">👤 Joueur #{{ index + 1 }}</p>
                       </div>
@@ -93,17 +142,23 @@
                       <div class="card-body">
                         <div class="mb-3 player-info">
                           <p class="user-info-text">
-                            <strong>🎮 Username:</strong> <span class="username-value">{{ item.username || '(N/A)' }}</span>
+                            <strong>🎮 Username:</strong> <span class="username-value">{{
+                              item.username || '(N/A)'
+                            }}</span>
                           </p>
                         </div>
 
                         <div class="stats-row">
                           <div class="stat-box">
-                            <p class="stat-value">{{ Array.isArray(item.sharedVideos) ? item.sharedVideos.length : 0 }}</p>
+                            <p class="stat-value">{{
+                                Array.isArray(item.sharedVideos) ? item.sharedVideos.length : 0
+                              }}</p>
                             <p class="stat-label">📨 Envoyés</p>
                           </div>
                           <div class="stat-box">
-                            <p class="stat-value">{{ Array.isArray(item.likedVideos) ? item.likedVideos.length : 0 }}</p>
+                            <p class="stat-value">{{
+                                Array.isArray(item.likedVideos) ? item.likedVideos.length : 0
+                              }}</p>
                             <p class="stat-label">❤️ Aimés</p>
                           </div>
                         </div>
@@ -116,7 +171,6 @@
                         <button
                             class="button is-small is-danger is-outlined delete-btn"
                             @click="removePlayer(index)"
-                            style="width: 100%;"
                         >
                           🗑️ Supprimer
                         </button>
@@ -135,6 +189,14 @@
                 </div>
               </div>
             </div>
+            <div v-if="players.length > 0" class="mt-4">
+              <button
+                  class="button is-fullwidth is-success launch-btn"
+                  @click="runNewGame();"
+              >
+                🚀 Lancer la partie
+              </button>
+            </div>
           </div>
 
           <div class="runGame" v-if="players.length > 0 && isRunningGame">
@@ -145,7 +207,7 @@
                     <div class="level-item">
                       <button
                           class="button is-danger"
-                          @click="() => { isRunningGame = false; gameScore.correct = 0; gameScore.total = 0; }"
+                          @click="endGame"
                       >
                         🎮 Fin de partie
                       </button>
@@ -163,48 +225,81 @@
               </div>
               <!-- Game content goes here -->
               <div class="columns">
-                <div class="column is-half">
+                <div class="column is-4">
                   <div class="tiktok-wrapper">
                     <iframe
-                      ref="tiktokIframe"
-                      :data-src="'https://www.tiktok.com/embed/v2/' + currentVideo.id"
-                      loading="lazy"
-                      allow="autoplay; encrypted-media; fullscreen"
-                      title="TikTok Video Embed"
+                        ref="tiktokIframe"
+                        :data-src="'https://www.tiktok.com/embed/v2/' + currentVideo.id"
+                        loading="lazy"
+                        allow="autoplay; encrypted-media; fullscreen"
+                        title="TikTok Video Embed"
                     ></iframe>
 
                     <div class="tiktok-fallback" v-if="embedBlocked">
                       <div class="fallback-inner">
                         <p class="mb-3">Impossible d'afficher la vidéo TikTok ici.</p>
-                        <button class="button btn-fun open-btn" @click="openOnTikTok(currentVideo.id)">Ouvrir sur TikTok</button>
+                        <button class="button btn-fun open-btn" @click="openOnTikTok(currentVideo.id)">Ouvrir sur
+                          TikTok
+                        </button>
                       </div>
                     </div>
                   </div>
                 </div>
-                <div class="column is-half has-text-centered">
+                <div class="column is-8 has-text-centered">
                   <h1 class="title" v-if="!currentVideo.isShared">❤️ Qui a aimé cette vidéo ?</h1>
-                  <h1 class="title" v-else>📱 Qui a envoyé cette vidéo à <span class="is-danger">{{ currentVideo.sharedUser }}</span> ?</h1>
+                  <h1 class="title" v-else>📱 Qui a envoyé cette vidéo à <span
+                      class="is-danger">{{ currentVideo.sharedUser }}</span> ?</h1>
 
-                  <button
-                      v-for="(player, index) in players"
-                      :key="index"
-                      class="button is-large is-fullwidth mb-3 player-btn"
-                      :class="{
-                        'is-success': showResultVideo && player.username === currentVideo.player,
-                        'is-danger': showResultVideo && player.username !== currentVideo.player,
-                      }"
-                      :disabled="showResultVideo"
-                      @click="selectPlayer(player)"
-                    >
-                      {{ player.username }}
-                    </button>
-                  <button
-                      class="button is-large is-fullwidth mb-3 is-warning skip-btn"
-                      :disabled="showResultVideo"
-                      @click="checkResult()"
-                  >
-                    ⏭️ Passer le tiktok
-                  </button>
+                  <div class="columns is-multiline">
+                    <div class="column is-4" v-for="(player, index) in players"
+
+                         :key="player.username || index">
+                      <div class="card is-clickable player-btn"
+                           :class="{
+                          'is-success': showResultVideo && player.username === currentVideo.player,
+                          'is-danger': showResultVideo && player.username !== currentVideo.player,
+                          'celebrate': celebratingPlayer === player.username
+                        }"
+
+                           @click="selectPlayer(player)"
+                      >
+                        <div class="card-content">
+                          <div class="content">
+                            <p class="is-vcentered">
+                              <span class="is-size-4">
+                                {{ player.username }}
+                              </span>
+                              <br>
+                              <span class="has-text-left"
+                                    v-if="options.susMode"><strong>#sus:</strong> {{ player.susNumber }}</span>
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+
+                  <div class="columns">
+                    <div class="column">
+                      <button
+                          class="button is-large is-fullwidth mb-3 is-warning skip-btn"
+                          :disabled="showResultVideo"
+                          @click="checkResult(false)"
+                      >
+                        ⏭️ Passer le tiktok
+                      </button>
+                    </div>
+                    <div class="column is-half" v-if="options.susMode">
+                      <button
+                          class="button is-large is-fullwidth mb-3 is-danger skip-btn"
+                          :disabled="showResultVideo"
+                          @click="checkResult(true)"
+                      >
+                        🛑 #sus
+                      </button>
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>
@@ -215,7 +310,7 @@
 
 
         <!-- Success Messages -->
-        <div class="notification is-success mt-4" v-if="successMessage">
+        <div class="notification is-success mt-4" v-if="successMessage" role="status">
           <button class="delete" @click="successMessage = ''"></button>
           {{ successMessage }}
         </div>
@@ -225,17 +320,17 @@
 </template>
 
 <script setup lang="ts">
-import { ref, watch, nextTick } from 'vue'
-import { useFileHandling } from '@/composables/useFileHandling'
-import { useExtraction } from '@/composables/useExtraction'
-import { usePlayers } from '@/composables/usePlayers'
-import { formatObject, getRandomInt } from '@/utils/helpers'
+import {ref, watch, nextTick, onUnmounted, computed} from 'vue'
+import {useFileHandling} from '@/composables/useFileHandling'
+import {useExtraction} from '@/composables/useExtraction'
+import {Player, usePlayers} from '@/composables/usePlayers'
+import {formatObject, getRandomInt} from '@/utils/helpers'
 
 // Initialiser les composables
-const { fileState, fileInput: fileInputRef, processFiles } = useFileHandling()
+const {fileState, fileInput: fileInputRef, processFiles} = useFileHandling()
 const rawFileData = ref<any[] | null>(null)
-const { createResultObject, extractRawObjects } = useExtraction(rawFileData)
-const { players, addPlayer, removePlayer, clearAll } = usePlayers()
+const {createResultObject, extractRawObjects} = useExtraction(rawFileData)
+const {players, addPlayer, removePlayer, clearAll} = usePlayers()
 
 // État local
 const errorMessage = ref<string>('')
@@ -243,14 +338,123 @@ const successMessage = ref<string>('')
 const submissionInfo = ref<Record<string, unknown> | null>(null)
 
 const isRunningGame = ref<boolean>(false)
-const currentVideo = ref<{ id: string; player: string; isShared: boolean; sharedUser: string }>({ id: '6718335390845095173', player: 'michel', isShared: false, sharedUser: '' })
+const currentVideo = ref<{
+  id: string;
+  player: string;
+  isShared: boolean;
+  sharedUser: string
+}>({id: '6718335390845095173', player: 'michel', isShared: false, sharedUser: ''})
 const showResultVideo = ref<boolean>(false)
-const gameScore = ref<{ correct: number; total: number }>({ correct: 0, total: 0 })
+const gameScore = ref<{ correct: number; total: number }>({correct: 0, total: 0})
 
-// TikTok embed state
+// Nouveaux états pour animations et lazy-load
+const celebratingPlayer = ref<string | null>(null)
 const tiktokIframe = ref<HTMLIFrameElement | null>(null)
 const hasLoaded = ref<boolean>(false)
 const embedBlocked = ref<boolean>(false)
+let iframeObserver: IntersectionObserver | null = null
+
+// Computed: extract unique shared users once
+const sharedUsersSorted = computed(() => {
+  try {
+    const sentAtList = players.value.flatMap((player: any) => Array.isArray(player.sharedVideos) ? player.sharedVideos.map((sv: any) => sv.sentAt) : [])
+    return Array.from(new Set(sentAtList)).sort()
+  } catch (e) {
+    return []
+  }
+})
+
+// Options UI state for the init panel
+const options = ref({
+  tiktokOption: 'Like et partage',
+  susMode: true,
+  whitelist: [] as string[],
+})
+
+function toggleWhitelistUser(name: string) {
+  if (options.value.whitelist.includes(name)) {
+    options.value.whitelist = options.value.whitelist.filter(n => n !== name)
+  } else {
+    options.value.whitelist = [...options.value.whitelist, name]
+  }
+}
+
+function isWhitelisted(name: string) {
+  return options.value.whitelist.includes(name)
+}
+
+function toggleSusMode() {
+  options.value.susMode = !options.value.susMode
+}
+
+// Lightweight confetti implementation (no external dep)
+function triggerConfetti(duration = 1200) {
+  const colors = ['#ff6b6b', '#ffd93d', '#6bcB77', '#5cc7ff', '#c56cff']
+  const end = Date.now() + duration
+  const canvas = document.createElement('canvas')
+  canvas.className = 'confetti-canvas'
+  canvas.style.position = 'fixed'
+  canvas.style.top = '0'
+  canvas.style.left = '0'
+  canvas.style.width = '100%'
+  canvas.style.height = '100%'
+  canvas.style.pointerEvents = 'none'
+  canvas.style.zIndex = '9999'
+  document.body.appendChild(canvas)
+  const ctxRaw = canvas.getContext('2d')
+  if (!ctxRaw) return
+  // use a non-null typed alias for closures
+  const ctx = ctxRaw as CanvasRenderingContext2D
+  const w = canvas.width = window.innerWidth
+  const h = canvas.height = window.innerHeight
+  const particles: any[] = []
+  const particleCount = Math.floor(60 + Math.random() * 40)
+  for (let i = 0; i < particleCount; i++) {
+    particles.push({
+      x: Math.random() * w,
+      y: Math.random() * -h,
+      vx: (Math.random() - 0.5) * 6,
+      vy: Math.random() * 4 + 2,
+      size: Math.random() * 8 + 4,
+      color: colors[Math.floor(Math.random() * colors.length)],
+      rotate: Math.random() * Math.PI,
+      vr: (Math.random() - 0.5) * 0.2
+    })
+  }
+
+  function render() {
+    ctx.clearRect(0, 0, w, h)
+    particles.forEach(p => {
+      p.x += p.vx
+      p.y += p.vy
+      p.vy += 0.12 // gravity
+      p.rotate += p.vr
+      ctx.save()
+      ctx.translate(p.x, p.y)
+      ctx.rotate(p.rotate)
+      ctx.fillStyle = p.color
+      ctx.fillRect(-p.size / 2, -p.size / 2, p.size, p.size * 0.6)
+      ctx.restore()
+    })
+  }
+
+  let rafId: number
+
+  function loop() {
+    render()
+    if (Date.now() < end) {
+      rafId = requestAnimationFrame(loop)
+    } else {
+      // fade out quickly
+      setTimeout(() => {
+        cancelAnimationFrame(rafId)
+        if (canvas && canvas.parentNode) canvas.parentNode.removeChild(canvas)
+      }, 300)
+    }
+  }
+
+  loop()
+}
 
 async function loadTikTokEmbed() {
   hasLoaded.value = false
@@ -260,16 +464,41 @@ async function loadTikTokEmbed() {
   if (!iframe) return
   const src = iframe.dataset.src
   if (!src) return
-  iframe.src = src
-  const onLoad = () => {
-    hasLoaded.value = true
-    iframe.removeEventListener('load', onLoad)
+
+  // Si IntersectionObserver disponible, attend que l'iframe soit visible
+  if ('IntersectionObserver' in window) {
+    if (iframeObserver) iframeObserver.disconnect()
+    iframeObserver = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          iframe.src = src
+          iframeObserver && iframeObserver.disconnect()
+          const onLoad = () => {
+            hasLoaded.value = true
+            iframe.removeEventListener('load', onLoad)
+          }
+          iframe.addEventListener('load', onLoad)
+        }
+      })
+    }, {root: null, threshold: 0.1})
+    iframeObserver.observe(iframe)
+  } else {
+    // fallback: charger directement et utiliser l'ancien timeout
+    iframe.src = src
+    const onLoad = () => {
+      hasLoaded.value = true
+      iframe.removeEventListener('load', onLoad)
+    }
+    iframe.addEventListener('load', onLoad)
+    setTimeout(() => {
+      if (!hasLoaded.value) embedBlocked.value = true
+    }, 2500)
   }
-  iframe.addEventListener('load', onLoad)
-  setTimeout(() => {
-    if (!hasLoaded.value) embedBlocked.value = true
-  }, 2500)
 }
+
+onUnmounted(() => {
+  if (iframeObserver) iframeObserver.disconnect()
+})
 
 function openOnTikTok(id: string) {
   const url = `https://www.tiktok.com/v/${id}`
@@ -278,10 +507,10 @@ function openOnTikTok(id: string) {
 
 // Watch pour charger l'embed quand la partie démarre ou que la vidéo change
 watch(
-  () => currentVideo.value.id,
-  (newId) => {
-    if (isRunningGame.value && newId) loadTikTokEmbed()
-  }
+    () => currentVideo.value.id,
+    (newId) => {
+      if (isRunningGame.value && newId) loadTikTokEmbed()
+    }
 )
 watch(isRunningGame, (val) => {
   if (val) loadTikTokEmbed()
@@ -312,18 +541,25 @@ const handleFileUpload = async (event: Event): Promise<void> => {
           continue
         }
         messageList
-          .filter((message: any) => message.Content.includes('https://www.tiktokv.com/share/video/'))
-          .filter((message: any) => message.From === resultObject.username)
-          .forEach((message: any) => {
-            sharedVideos.push({ video: message.Content, sentAt: keyChatName.split('Chat History with ')[1].trim().split(':')[0].trim() })
-          })
+            .filter((message: any) => message.Content.includes('https://www.tiktokv.com/share/video/'))
+            .filter((message: any) => message.From === resultObject.username)
+            .forEach((message: any) => {
+              sharedVideos.push({
+                video: message.Content,
+                sentAt: keyChatName.split('Chat History with ')[1].trim().split(':')[0].trim()
+              })
+            })
       }
 
       const newPlayer = {
         username: resultObject.username || 'Inconnu',
         likedVideos: resultObject.likedVideos.map((rawVideo: { date: string; link: string }) => rawVideo.link) || [],
         sharedVideos: sharedVideos || [],
+        susNumber: 0,
       }
+
+      // Mettre à jour la whitelist automatiquement
+      toggleWhitelistUser(newPlayer.username)
 
       // Ajouter aux résultats
       addPlayer(newPlayer)
@@ -355,41 +591,123 @@ const handleClearAll = (): void => {
   }
 }
 
+// Helper: robust extraction de l'ID TikTok à partir d'un lien
+function extractTikTokId(link: unknown): string | null {
+  if (typeof link !== 'string') return null
+  const str = link.trim()
+  if (str.length === 0) return null
+  // formats attendus : /video/1234567890123456789 ou /v/1234567890123456789
+  const m1 = str.match(/\/video\/(\d+)/)
+  if (m1 && m1[1]) return m1[1]
+  const m2 = str.match(/\/v\/(\d+)/)
+  if (m2 && m2[1]) return m2[1]
+  // fallback: cherche une suite de chiffres longue (>=6)
+  const m3 = str.match(/(\d{6,})/)
+  if (m3 && m3[1]) return m3[1]
+  return null
+}
+
+function getRandomLikedVideoFromPlayer(player: Player): {
+  id: string;
+  player: string;
+  isShared: boolean;
+  sharedUser: string
+} | null {
+  if (Array.isArray(player.likedVideos) && player.likedVideos.length > 0) {
+    const link = player.likedVideos[getRandomInt(player.likedVideos.length)]
+    const id = extractTikTokId(link)
+    if (id) {
+      return {id, player: player.username, isShared: false, sharedUser: ''}
+    }
+  }
+  return null
+}
+
+function getRandomSharedVideoFromPlayer(player: Player): {
+  id: string;
+  player: string;
+  isShared: boolean;
+  sharedUser: string
+} | null {
+  if (Array.isArray(player.sharedVideos) && player.sharedVideos.length > 0) {
+    const whitelistedSharedVideos = options.value.whitelist.length > 0
+        ? player.sharedVideos.filter(sv => options.value.whitelist.includes(sv.sentAt))
+        : player.sharedVideos
+    if (whitelistedSharedVideos.length === 0) return null
+    const sharedVideo = whitelistedSharedVideos[getRandomInt(whitelistedSharedVideos.length)]
+    const id = extractTikTokId(sharedVideo.video)
+    if (id) {
+      return {id, player: player.username, isShared: true, sharedUser: sharedVideo.sentAt}
+    }
+  }
+  return null
+}
+
+// Helper: retourne un objet {id, player, isShared, sharedUser} ou null
+function getRandomVideoFromPlayers() {
+  if (!Array.isArray(players.value) || players.value.length === 0) {
+    return null
+  }
+
+  // Pour éviter la récursion infinie, on tente un nombre limité d'essais
+  const maxAttempts = Math.max(6, players.value.length * 3)
+  for (let attempt = 0; attempt < maxAttempts; attempt++) {
+    const indexPlayer = getRandomInt(players.value.length)
+    const player = players.value[indexPlayer]
+    if (!player) continue
+
+    // Filtrer selon options
+    const pickType = (() => {
+      if (options.value.tiktokOption === 'Like') return 'like'
+      if (options.value.tiktokOption === 'Partage') return 'share'
+      return Math.random() < 0.5 ? 'like' : 'share'
+    })()
+
+    let candidate = null
+    if (pickType === 'like') {
+      candidate = getRandomLikedVideoFromPlayer(player)
+    } else {
+      candidate = getRandomSharedVideoFromPlayer(player)
+    }
+
+    if (candidate) return candidate
+  }
+
+  // Aucun résultat valide trouvé après plusieurs essais
+  return null
+}
+
 const runNewGame = () => {
   isRunningGame.value = true
   showResultVideo.value = false
-
-  if (Math.random() < 0.5) {
-    // choisir une vidéo aimée par un joueur
-    const indexPlayer = getRandomInt(players.value.length)
-    const player = players.value[indexPlayer]
-
-    if (player.likedVideos.length > 0) {
-      currentVideo.value = {
-        id: player.likedVideos[getRandomInt(player.likedVideos.length)].split('/video/')[1],
-        player: player.username,
-        isShared: false,
-        sharedUser: '',
-      }
-    }
+  const candidate = getRandomVideoFromPlayers()
+  if (candidate) {
+    currentVideo.value = candidate
   } else {
-    // choisir une vidéo partagée par un joueur
-    const indexPlayer = getRandomInt(players.value.length)
-    const player = players.value[indexPlayer]
-
-    if (player.sharedVideos.length > 0) {
-      const sharedVideo = player.sharedVideos[getRandomInt(player.sharedVideos.length)]
-      currentVideo.value = {
-        id: sharedVideo.video.split('/video/')[1],
-        player: player.username,
-        isShared: true,
-        sharedUser: sharedVideo.sentAt,
-      }
-    }
+    // Aucun résultat valide trouvé
+    errorMessage.value = 'Aucune vidéo valide trouvée parmi les joueurs. Chargez d\'autres fichiers ou vérifiez les données.'
+    // stop la partie proprement
+    isRunningGame.value = false
+    setTimeout(() => errorMessage.value = '', 5000)
   }
 }
 
-const checkResult = () => {
+const endGame = () => {
+  isRunningGame.value = false
+  gameScore.value.correct = 0
+  gameScore.value.total = 0
+  players.value.forEach(player => player.susNumber = 0)
+  showResultVideo.value = false
+  celebratingPlayer.value = null
+}
+
+const checkResult = (_isSus: boolean = false) => {
+  if (_isSus) {
+    const indexPlayer = players.value.findIndex(p => p.username === currentVideo.value.player)
+    if (indexPlayer !== -1) {
+      players.value[indexPlayer].susNumber += 1
+    }
+  }
   showResultVideo.value = true
   setTimeout(() => {
     showResultVideo.value = false
@@ -399,10 +717,19 @@ const checkResult = () => {
   }, 3000)
 }
 
-function selectPlayer(player: any) {
+function selectPlayer(player: { username: string }) {
+  if (showResultVideo.value) return
   gameScore.value.total++
   if (player.username === currentVideo.value.player) {
     gameScore.value.correct++
+    celebratingPlayer.value = player.username
+    // trigger confetti animation
+    try {
+      triggerConfetti()
+    } catch (e) { /* noop */
+    }
+    // clear celebration after animation
+    setTimeout(() => celebratingPlayer.value = null, 1600)
   }
   checkResult()
 }
@@ -429,7 +756,7 @@ function selectPlayer(player: any) {
   width: 100%;
   height: 100%;
   background: radial-gradient(circle at 20% 50%, rgba(255, 107, 107, 0.1) 0%, transparent 50%),
-              radial-gradient(circle at 80% 80%, rgba(102, 153, 255, 0.1) 0%, transparent 50%);
+  radial-gradient(circle at 80% 80%, rgba(102, 153, 255, 0.1) 0%, transparent 50%);
   pointer-events: none;
   animation: gradientShift 15s ease infinite;
 }
@@ -437,11 +764,11 @@ function selectPlayer(player: any) {
 @keyframes gradientShift {
   0%, 100% {
     background: radial-gradient(circle at 20% 50%, rgba(255, 107, 107, 0.1) 0%, transparent 50%),
-                radial-gradient(circle at 80% 80%, rgba(102, 153, 255, 0.1) 0%, transparent 50%);
+    radial-gradient(circle at 80% 80%, rgba(102, 153, 255, 0.1) 0%, transparent 50%);
   }
   50% {
     background: radial-gradient(circle at 80% 30%, rgba(255, 107, 107, 0.1) 0%, transparent 50%),
-                radial-gradient(circle at 20% 70%, rgba(102, 153, 255, 0.1) 0%, transparent 50%);
+    radial-gradient(circle at 20% 70%, rgba(102, 153, 255, 0.1) 0%, transparent 50%);
   }
 }
 
@@ -507,7 +834,12 @@ function selectPlayer(player: any) {
 }
 
 .results-list {
-  max-height: 600px;
+  max-height: 450px;
+  overflow-y: auto;
+}
+
+.options-list {
+  max-height: 400px;
   overflow-y: auto;
 }
 
@@ -625,165 +957,6 @@ function selectPlayer(player: any) {
     transform: translateX(0);
   }
   25% {
-    transform: translateX(-10px);
-  }
-  75% {
-    transform: translateX(10px);
-  }
-}
-
-.notification {
-  animation: slideIn 0.3s ease, slideOut 0.3s ease 2.7s forwards;
-}
-
-@keyframes slideIn {
-  from {
-    opacity: 0;
-    transform: translateY(-10px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-@keyframes slideOut {
-  from {
-    opacity: 1;
-    transform: translateY(0);
-  }
-  to {
-    opacity: 0;
-    transform: translateY(-10px);
-  }
-}
-
-.runGame {
-  animation: fadeInUp 0.5s ease;
-}
-
-iframe {
-  animation: scaleIn 0.5s ease;
-}
-
-@keyframes scaleIn {
-  from {
-    opacity: 0;
-    transform: scale(0.95);
-  }
-  to {
-    opacity: 1;
-    transform: scale(1);
-  }
-}
-
-/* Animations amusantes pour le jeu de soirée */
-.runGame .box {
-  background: linear-gradient(135deg, rgba(255,255,255,0.95) 0%, rgba(240,240,255,0.95) 100%);
-  border: 3px solid #667eea;
-  border-radius: 16px;
-}
-
-.runGame .title {
-  color: #667eea;
-  font-size: 2rem;
-  text-shadow: 2px 2px 4px rgba(102, 126, 234, 0.2);
-  animation: titlePulse 1.5s ease infinite;
-}
-
-.runGame .title span{
-  color: #e34141;
-  font-size: 2rem;
-  text-shadow: 2px 2px 4px rgba(234, 102, 102, 0.2);
-  animation: titlePulse 1.5s ease infinite;
-}
-
-@keyframes titlePulse {
-  0%, 100% {
-    transform: scale(1);
-  }
-  50% {
-    transform: scale(1.05);
-  }
-}
-
-.player-btn {
-  background: linear-gradient(135deg, #3273dc 0%, #2366d1 100%);
-  border: none;
-  font-weight: 700;
-  letter-spacing: 0.5px;
-  text-transform: uppercase;
-  box-shadow: 0 4px 15px rgba(50, 115, 220, 0.3);
-  position: relative;
-  overflow: hidden;
-  transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
-}
-
-.player-btn:hover:not(:disabled) {
-  transform: translateY(-6px) scale(1.02);
-  box-shadow: 0 8px 25px rgba(50, 115, 220, 0.5);
-}
-
-.player-btn:active:not(:disabled) {
-  transform: translateY(-2px) scale(1);
-}
-
-.player-btn.is-success {
-  background: linear-gradient(135deg, #48bb78 0%, #38a169 100%);
-  box-shadow: 0 0 30px rgba(72, 187, 120, 0.6);
-  animation: confetti 0.8s ease-out;
-}
-
-.player-btn.is-danger {
-  background: linear-gradient(135deg, #f56565 0%, #e53e3e 100%);
-  animation: dangerShake 0.6s ease;
-}
-
-.player-btn.is-disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-  transform: none !important;
-}
-
-.skip-btn {
-  background: linear-gradient(135deg, #f6ad55 0%, #ed8936 100%);
-  border: none;
-  font-weight: 700;
-  letter-spacing: 0.5px;
-  box-shadow: 0 4px 15px rgba(237, 137, 54, 0.3);
-  transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
-}
-
-.skip-btn:hover:not(:disabled) {
-  transform: translateY(-6px) scale(1.02);
-  box-shadow: 0 8px 25px rgba(237, 137, 54, 0.5);
-}
-
-.skip-btn:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-}
-
-@keyframes confetti {
-  0% {
-    transform: translateY(0) scale(1);
-    box-shadow: 0 0 30px rgba(72, 187, 120, 0.6);
-  }
-  50% {
-    transform: translateY(-20px) scale(1.1);
-    box-shadow: 0 10px 40px rgba(72, 187, 120, 0.8);
-  }
-  100% {
-    transform: translateY(0) scale(1);
-    box-shadow: 0 0 30px rgba(72, 187, 120, 0.6);
-  }
-}
-
-@keyframes dangerShake {
-  0%, 100% {
-    transform: translateX(0);
-  }
-  25% {
     transform: translateX(-15px);
   }
   50% {
@@ -794,10 +967,49 @@ iframe {
   }
 }
 
-/* Iframe TikTok animation */
-iframe {
+/* Animation de célébration (emoji + glow) */
+.player-btn.celebrate {
+  animation: confetti 0.9s ease-out;
+  position: relative;
+}
+
+.player-btn.celebrate::after {
+  content: '🎉';
+  position: absolute;
+  right: 12px;
+  top: -6px;
+  font-size: 1.6rem;
+  transform: translateY(0);
+  animation: popUp 0.9s ease-out forwards;
+  text-shadow: 0 6px 20px rgba(255, 255, 255, 0.7);
+}
+
+@keyframes popUp {
+  0% {
+    transform: translateY(0) scale(0.6);
+    opacity: 0;
+  }
+  50% {
+    transform: translateY(-18px) scale(1.05);
+    opacity: 1;
+  }
+  100% {
+    transform: translateY(-34px) scale(0.95);
+    opacity: 0;
+  }
+}
+
+/* Garde le style iframe mais évite duplication */
+.tiktok-wrapper iframe {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  border: none;
+  border-radius: 12px;
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.15);
   animation: slideInLeft 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
-  transition: all 0.3s ease;
 }
 
 @keyframes slideInLeft {
@@ -811,118 +1023,9 @@ iframe {
   }
 }
 
-/* Couleurs amusantes au survol */
-.player-btn::after {
-  content: '';
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  width: 0;
-  height: 0;
-  border-radius: 50%;
-  background: rgba(255, 255, 255, 0.4);
-  transform: translate(-50%, -50%);
-  transition: width 0.6s, height 0.6s;
-}
-
-.player-btn:active::after {
-  width: 300px;
-  height: 300px;
-}
-
-/* Score display */
-.score-display {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  color: white;
-  padding: 10px 20px;
-  border-radius: 50px;
-  font-weight: bold;
-  box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
-  animation: scorePulse 0.5s ease;
-}
-
-@keyframes scorePulse {
-  0%, 100% {
-    transform: scale(1);
-  }
-  50% {
-    transform: scale(1.1);
-  }
-}
-
-/* Buttons container */
-.buttons-container {
-  display: flex;
-  flex-direction: column;
-  gap: 0;
-}
-
-/* Réinitialiser le jeu avec transition */
-.runGame {
-  animation: fadeInUp 0.5s ease;
-}
-
-/* Ajouter du padding et du style au level */
-.level {
-  background: linear-gradient(135deg, rgba(102, 126, 234, 0.05) 0%, rgba(118, 75, 162, 0.05) 100%);
-  padding: 1rem;
-  border-radius: 8px;
-  margin-bottom: 1rem;
-}
-
-/* Amélioration des colonnes de jeu */
-.columns.runGame-columns {
-  gap: 2rem;
-}
-
-/* Amélioration du titre "Fin de partie" */
-.button.is-danger {
-  font-weight: 700;
-}
-
-/* Hover effects sur les contrôles de jeu */
-.runGame .level-item:hover {
-  transform: scale(1.02);
-  transition: transform 0.3s ease;
-}
-
-/* Style pour le bouton "Lancer la partie" */
-.initGame .button.is-success {
-  background: linear-gradient(135deg, #48bb78 0%, #38a169 100%);
-  border: none;
-  font-weight: 700;
-  font-size: 1.2rem;
-  box-shadow: 0 4px 15px rgba(72, 187, 120, 0.3);
-  transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
-}
-
-.initGame .button.is-success:hover {
-  transform: translateY(-8px) scale(1.05);
-  box-shadow: 0 8px 30px rgba(72, 187, 120, 0.5);
-}
-
-/* Style pour le bouton "Vider tout" */
-.box .button.is-warning {
-  background: linear-gradient(135deg, #ed8936 0%, #d69e2e 100%);
-  border: none;
-  font-weight: 700;
-  box-shadow: 0 4px 15px rgba(237, 137, 54, 0.3);
-  transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
-}
-
-.box .button.is-warning:hover {
-  transform: translateY(-4px) scale(1.02);
-  box-shadow: 0 8px 25px rgba(237, 137, 54, 0.5);
-}
-
-/* Améliorations des boutons de suppression */
-.button.is-danger.is-outlined {
-  transition: all 0.3s ease;
-}
-
-.button.is-danger.is-outlined:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 4px 15px rgba(245, 101, 101, 0.3);
+/* small accessibility helpers */
+button[disabled] {
+  cursor: not-allowed;
 }
 
 /* ======== MAIN TITLE ANIMATION ======== */
@@ -950,8 +1053,12 @@ iframe {
 }
 
 @keyframes shimmer {
-  0% { left: -100%; }
-  100% { left: 100%; }
+  0% {
+    left: -100%;
+  }
+  100% {
+    left: 100%;
+  }
 }
 
 .upload-title {
@@ -1006,8 +1113,12 @@ iframe {
 }
 
 @keyframes pulse {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0.7; }
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.7;
+  }
 }
 
 .success-box {
@@ -1031,9 +1142,15 @@ iframe {
 }
 
 @keyframes shake {
-  0%, 100% { transform: translateX(0); }
-  25% { transform: translateX(-10px); }
-  75% { transform: translateX(10px); }
+  0%, 100% {
+    transform: translateX(0);
+  }
+  25% {
+    transform: translateX(-10px);
+  }
+  75% {
+    transform: translateX(10px);
+  }
 }
 
 .launch-btn {
@@ -1236,6 +1353,7 @@ iframe {
   margin: 0 auto;
   padding-top: 177.78%; /* ratio approximatif 575/325 */
 }
+
 .tiktok-wrapper iframe {
   position: absolute;
   top: 0;
@@ -1244,27 +1362,234 @@ iframe {
   height: 100%;
   border: none;
   border-radius: 12px;
-  box-shadow: 0 8px 30px rgba(0,0,0,0.15);
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.15);
+  animation: slideInLeft 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
 }
+
 .tiktok-fallback {
   position: absolute;
   inset: 0;
   display: flex;
   align-items: center;
   justify-content: center;
-  background: linear-gradient(135deg,#fff6e6,#ffe8d6);
+  background: linear-gradient(135deg, #fff6e6, #ffe8d6);
   border-radius: 12px;
   padding: 1rem;
   text-align: center;
 }
+
 .btn-fun {
   padding: .6rem 1rem;
   border-radius: 10px;
   font-weight: 800;
-  background: linear-gradient(135deg,#48bb78,#2f9a60);
+  background: linear-gradient(135deg, #48bb78, #2f9a60);
   color: #fff;
-  box-shadow: 0 8px 24px rgba(72,187,120,0.25);
+  box-shadow: 0 8px 24px rgba(72, 187, 120, 0.25);
   transition: transform .25s, box-shadow .25s;
 }
-.btn-fun:hover:not(:disabled) { transform: translateY(-6px); box-shadow: 0 12px 36px rgba(72,187,120,0.35); }
+
+.btn-fun:hover:not(:disabled) {
+  transform: translateY(-6px);
+  box-shadow: 0 12px 36px rgba(72, 187, 120, 0.35);
+}
+
+/* ===== Options animations / styles ===== */
+.options-animated {
+  transition: transform 0.35s ease, box-shadow 0.35s ease;
+}
+
+.options-animated:hover {
+  transform: translateY(-6px) scale(1.01);
+  box-shadow: 0 14px 30px rgba(102, 126, 234, 0.12);
+}
+
+.animated-select select {
+  padding: 0.6rem 0.9rem;
+  border-radius: 10px;
+  transition: box-shadow 0.25s ease, transform 0.2s ease;
+}
+
+.animated-select select:focus {
+  box-shadow: 0 8px 24px rgba(102, 126, 234, 0.18);
+  transform: translateY(-2px);
+}
+
+/* Toggle switch */
+.toggle-switch {
+  display: inline-block;
+  width: 54px;
+  height: 28px;
+  position: relative;
+  cursor: pointer;
+  user-select: none;
+}
+
+.toggle-switch .switch-track {
+  position: absolute;
+  inset: 0;
+  border-radius: 999px;
+  background: #e6e6e6;
+  transition: background 0.25s ease;
+  box-shadow: inset 0 2px 6px rgba(0, 0, 0, 0.06);
+}
+
+.toggle-switch .switch-thumb {
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: white;
+  transition: transform 0.25s cubic-bezier(.2, .9, .2, 1), box-shadow 0.2s ease;
+  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.12);
+}
+
+.toggle-switch.on .switch-track {
+  background: linear-gradient(90deg, #48bb78, #2f9a60);
+}
+
+.toggle-switch.on .switch-thumb {
+  transform: translateX(26px);
+}
+
+.whitelist-list .whitelist-tag {
+  margin: 4px;
+}
+
+.inline-checkbox {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.inline-checkbox .tag-label {
+  margin-left: 6px;
+  font-weight: 700;
+  color: #4a4a4a
+}
+
+/* ===== In-game player success/fail animations ===== */
+.card.is-success.player-btn {
+  border: 2px solid rgba(72, 187, 120, 0.95);
+  box-shadow: 0 18px 40px rgba(72, 187, 120, 0.18), 0 0 40px rgba(72,187,120,0.06) inset;
+  transform: translateY(-8px) scale(1.035) rotate(-0.6deg);
+  transition: all 0.45s cubic-bezier(.2, .9, .2, 1);
+  background: linear-gradient(135deg, rgba(72,187,120,0.06), rgba(72,187,120,0.02));
+  overflow: visible;
+}
+
+.card.is-success.player-btn .is-size-4, .card.is-success.player-btn .username-value {
+  color: #0f6b3a !important;
+  text-shadow: 0 4px 18px rgba(72, 187, 120, 0.18);
+  transform: translateY(-2px);
+}
+
+.card.is-danger.player-btn {
+  border: 2px solid rgba(245, 101, 101, 0.95);
+  box-shadow: 0 18px 40px rgba(245, 101, 101, 0.14), 0 0 32px rgba(245,101,101,0.04) inset;
+  transform: translateY(-6px) scale(1.02) rotate(0.6deg);
+  transition: all 0.45s cubic-bezier(.2, .9, .2, 1);
+  background: linear-gradient(135deg, rgba(245,101,101,0.04), rgba(245,101,101,0.01));
+  overflow: visible;
+}
+
+.card.is-danger.player-btn .is-size-4, .card.is-danger.player-btn .username-value {
+  color: #8b2323 !important;
+  transform: translateY(-1px);
+}
+
+/* badge (tick / cross) animé qui apparaît en haut à droite */
+.card.is-success.player-btn::after, .card.is-danger.player-btn::after {
+  content: '';
+  position: absolute;
+  top: -12px;
+  right: -12px;
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.25rem;
+  color: white;
+  transform: scale(0.2) translateY(-6px);
+  opacity: 0;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.18);
+  z-index: 4;
+}
+.card.is-success.player-btn::after {
+  content: '✓';
+  background: radial-gradient(circle at 30% 20%, #6ee7b7, #2f9a60);
+  animation: popBadgeSuccess 700ms cubic-bezier(.2,.9,.2,1) forwards;
+}
+.card.is-danger.player-btn::after {
+  content: '✖';
+  background: radial-gradient(circle at 30% 20%, #ffb4b4, #e23b3b);
+  animation: popBadgeDanger 700ms cubic-bezier(.2,.9,.2,1) forwards;
+}
+
+@keyframes popBadgeSuccess {
+  0% { transform: scale(0.2) translateY(-12px); opacity: 0 }
+  60% { transform: scale(1.12) translateY(2px); opacity: 1 }
+  100% { transform: scale(1) translateY(0); opacity: 1 }
+}
+@keyframes popBadgeDanger {
+  0% { transform: scale(0.2) translateY(-12px) rotate(-20deg); opacity: 0 }
+  60% { transform: scale(1.12) translateY(2px) rotate(6deg); opacity: 1 }
+  100% { transform: scale(1) translateY(0) rotate(0); opacity: 1 }
+}
+
+/* Hover / idle animations for player buttons (when not revealed) */
+.player-btn {
+  transition: transform 240ms cubic-bezier(.2,.9,.2,1), box-shadow 240ms, background 240ms;
+  cursor: pointer;
+}
+.player-btn:hover {
+  transform: translateY(-8px) scale(1.02) rotate(-0.6deg);
+  box-shadow: 0 18px 40px rgba(0,0,0,0.12);
+}
+.player-btn:active {
+  transform: translateY(-2px) scale(0.99);
+}
+
+/* subtle animated border glow while waiting for reveal */
+.player-btn::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: 8px;
+  pointer-events: none;
+  transition: box-shadow 0.4s ease, opacity 0.4s ease;
+  box-shadow: 0 0 0 0 rgba(0,0,0,0);
+  opacity: 0;
+}
+.player-btn:hover::before {
+  opacity: 1;
+  box-shadow: 0 12px 30px rgba(102,126,234,0.12);
+}
+
+/* glow pulse pour les cards gagnantes (loop bref) */
+.card.is-success.player-btn { animation: successGlow 1.6s ease-in-out 1; }
+@keyframes successGlow {
+  0% { box-shadow: 0 8px 20px rgba(72,187,120,0.12); }
+  50% { box-shadow: 0 26px 60px rgba(72,187,120,0.22); transform: translateY(-10px) scale(1.04); }
+  100% { box-shadow: 0 8px 20px rgba(72,187,120,0.12); transform: translateY(-8px) scale(1.035); }
+}
+
+/* petit shake + fade pour la mauvaise réponse */
+.card.is-danger.player-btn { animation: dangerFlash 900ms ease; }
+@keyframes dangerFlash {
+  0% { filter: grayscale(0.4); transform: translateY(-6px) scale(1.02); }
+  30% { transform: translateY(-6px) scale(1.02) rotate(-2deg); }
+  60% { transform: translateY(-8px) scale(1.03) rotate(2deg); }
+  100% { transform: translateY(-6px) scale(1.02); filter: none; }
+}
+
+/* rendre la carte plus colorée pendant reveal pour la lisibilité */
+.card.is-success.player-btn .card-content { background: linear-gradient(90deg, rgba(72,187,120,0.02), rgba(255,255,255,0.02)); }
+.card.is-danger.player-btn .card-content { background: linear-gradient(90deg, rgba(245,101,101,0.02), rgba(255,255,255,0.01)); }
+
+/* assure que le badge de célébration existant ne rentre pas en conflit */
+.player-btn.celebrate::after { right: 14px; top: -8px; transform-origin: center; }
 </style>
