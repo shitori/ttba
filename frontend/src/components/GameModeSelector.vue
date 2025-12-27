@@ -49,20 +49,6 @@
             </div>
             <p class="help">Entrez le code de la room fourni par l'hôte</p>
           </div>
-
-          <div class="field">
-            <label class="label">Votre pseudo</label>
-            <div class="control">
-              <input
-                class="input"
-                type="text"
-                v-model="guestName"
-                placeholder="Ex: Joueur123"
-                @keyup.enter="joinRoom"
-                maxlength="20"
-              />
-            </div>
-          </div>
         </section>
         <footer class="modal-card-foot">
           <button class="button is-success is-fullwidth" @click="joinRoom" :disabled="!canJoin">
@@ -78,23 +64,21 @@
 import { ref, computed } from 'vue'
 
 const emit = defineEmits<{
-  (e: 'select-mode', mode: 'host' | 'guest', data?: { roomCode: string; guestName: string }): void
+  (e: 'select-mode', mode: 'host' | 'guest', data?: { roomCode: string }): void
 }>()
 
 const showJoinModal = ref(false)
 const roomCode = ref('')
-const guestName = ref('')
 
 const canJoin = computed(() => {
-  return roomCode.value.trim().length >= 4 && guestName.value.trim().length >= 2
+  return roomCode.value.trim().length >= 4
 })
 
 function joinRoom() {
   if (!canJoin.value) return
 
   emit('select-mode', 'guest', {
-    roomCode: roomCode.value.trim().toUpperCase(),
-    guestName: guestName.value.trim()
+    roomCode: roomCode.value.trim().toUpperCase()
   })
 
   showJoinModal.value = false

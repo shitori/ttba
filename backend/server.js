@@ -332,6 +332,7 @@ io.on('connection', (socket) => {
     }
   })
 
+
   socket.on('game:score_update', () => {
     try {
       const player = connectedPlayers.get(socket.id)

@@ -1,17 +1,5 @@
 <template>
   <div class="guest-view">
-    <div class="guest-header">
-      <div class="room-info">
-        <span class="room-label">Room:</span>
-        <span class="room-code">{{ roomCode }}</span>
-      </div>
-      <div class="guest-info">
-        <span class="guest-icon">👤</span>
-        <span class="guest-name">{{ guestName }}</span>
-        <span v-if="susMode" class="sus-badge" title="Sus mode actif">🛡️ Sus</span>
-      </div>
-    </div>
-
     <!-- En attente du début de la partie -->
     <div v-if="gameState === 'waiting'" class="waiting-state">
       <div class="waiting-animation">
@@ -24,6 +12,7 @@
 
     <!-- Partie en cours -->
     <div v-else-if="gameState === 'playing'" class="playing-state">
+
       <GameBoard
         :players="players"
         :current-video="currentVideo"
@@ -34,10 +23,25 @@
         :is-guest="true"
         :disabled="hasAnswered && !localShowResult"
         @select="handleGuestAnswer"
+        @reveal="handleGuestReveal"
       />
-      <div v-if="hasAnswered && !localShowResult" class="answer-sent">
-        ✉️ Réponse envoyée — en attente de l'hôte...
-      </div>
+
+      <!-- Confirmation de réponse envoyée -->
+      <transition name="slide-up">
+        <div v-if="hasAnswered && !localShowResult" class="answer-sent">
+          <span class="check-icon">✅</span>
+          <span class="answer-text">Réponse envoyée!</span>
+          <span class="waiting-text">En attente du résultat...</span>
+        </div>
+      </transition>
+
+      <!-- Animation du résultat personnalisé -->
+      <transition name="result-fade">
+        <div v-if="hasAnswered && localShowResult && guestWasCorrect !== null" class="guest-result-banner" :class="{ correct: guestWasCorrect, incorrect: !guestWasCorrect }">
+          <span class="result-emoji">{{ guestWasCorrect ? '🎉' : '😔' }}</span>
+          <span class="result-text">{{ guestWasCorrect ? '✓ Bonne réponse!' : '✗ Mauvaise réponse' }}</span>
+        </div>
+      </transition>
     </div>
 
     <!-- Partie terminée -->
@@ -72,7 +76,6 @@ import GameBoard from './GameBoard.vue'
 
 const props = defineProps<{
   roomCode: string
-  guestName: string
   gameState: 'waiting' | 'playing' | 'ended' | 'host-disconnected'
   players: any[]
   currentVideo: any
@@ -90,6 +93,7 @@ const emit = defineEmits<{
 const localScore = ref({ correct: 0, total: 0 })
 const hasAnswered = ref(false)
 const localShowResult = ref(false)
+const guestWasCorrect = ref<boolean | null>(null)
 
 const scorePercentage = computed(() => {
   if (localScore.value.total === 0) return 0
@@ -103,6 +107,7 @@ function handleGuestAnswer(player: { username: string }) {
 
   if (props.guestCorrectPlayer) {
     const isCorrect = player.username === props.guestCorrectPlayer
+    guestWasCorrect.value = isCorrect
     if (isCorrect) {
       localScore.value.correct++
     }
@@ -113,10 +118,17 @@ function handleGuestAnswer(player: { username: string }) {
       localShowResult.value = false
       // Nettoyer le joueur pour la prochaine question
       props.currentVideo.player = ''
+      guestWasCorrect.value = null
     }, 3000)
   }
 
   emit('guest-answer', { player: player.username })
+}
+
+function handleGuestReveal(isSus: boolean) {
+  // Rien à faire côté guest pour le reveal - c'est juste ignoré
+  // L'hôte gère le reveal et renvoie les résultats
+  console.log('[Guest] #sus clicked, waiting for host reveal')
 }
 
 // Exposer une méthode pour mettre à jour le score depuis le parent
@@ -139,41 +151,6 @@ defineExpose({
   min-height: 70vh;
 }
 
-.guest-header {
-  padding: var(--space-4);
-  border-radius: var(--radius-md);
-  background: var(--color-surface);
-  box-shadow: var(--shadow-soft);
-}
-
-.room-info {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-}
-
-.room-label {
-  font-weight: 600;
-  color: #666;
-}
-
-.room-code {
-  font-weight: 800;
-  color: var(--color-primary);
-  background: rgba(102, 126, 234, 0.15);
-  border-radius: var(--radius-sm);
-  padding: 0.25rem 0.75rem;
-}
-
-.guest-info {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  padding: 0.3rem 0.8rem;
-  background: var(--grad-success);
-  color: #fff;
-  border-radius: 20px;
-}
 
 /* États d'attente */
 .waiting-state, .ended-state, .disconnected-state {
@@ -296,17 +273,7 @@ defineExpose({
   color: #f56565;
 }
 
-.sus-badge {
-  margin-left: 0.6rem;
-  padding: 0.2rem 0.5rem;
-  border-radius: 10px;
-  background: rgba(245, 158, 11, 0.18);
-  color: #b45309;
-  font-weight: 800;
-  font-size: 0.85rem;
-}
-
-.answer-sent {
+.check-icon {
   margin-top: 1rem;
   text-align: center;
   font-size: 0.95rem;
@@ -315,5 +282,123 @@ defineExpose({
   border: 1px dashed rgba(102, 126, 234, 0.35);
   padding: 0.6rem 1rem;
   border-radius: 10px;
+}
+
+
+/* Animation de confirmation */
+.answer-sent {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+  margin-top: 1rem;
+  padding: 0.8rem 1.2rem;
+  background: linear-gradient(135deg, rgba(72, 187, 120, 0.12) 0%, rgba(72, 187, 120, 0.06) 100%);
+  border: 1px solid rgba(72, 187, 120, 0.3);
+  border-radius: 10px;
+  color: #2d6a4f;
+  font-weight: 600;
+  animation: slideUp 0.4s ease-out;
+}
+
+.check-icon {
+  font-size: 1.2rem;
+  animation: checkBounce 0.6s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+}
+
+@keyframes checkBounce {
+  0% { transform: scale(0) rotate(-45deg); opacity: 0; }
+  50% { transform: scale(1.2); }
+  100% { transform: scale(1) rotate(0); opacity: 1; }
+}
+
+.answer-text {
+  font-weight: 700;
+}
+
+.waiting-text {
+  font-size: 0.85rem;
+  opacity: 0.8;
+}
+
+/* Banner de résultat personnalisé */
+.guest-result-banner {
+  margin-top: 1rem;
+  padding: 1rem 1.5rem;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  font-weight: 700;
+  animation: slideDown 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.guest-result-banner.correct {
+  background: linear-gradient(135deg, rgba(72, 187, 120, 0.15) 0%, rgba(72, 187, 120, 0.08) 100%);
+  border: 2px solid rgba(72, 187, 120, 0.4);
+  color: #2d6a4f;
+}
+
+.guest-result-banner.incorrect {
+  background: linear-gradient(135deg, rgba(245, 101, 101, 0.12) 0%, rgba(245, 101, 101, 0.06) 100%);
+  border: 2px solid rgba(245, 101, 101, 0.3);
+  color: #7f1d1d;
+}
+
+.result-emoji {
+  font-size: 1.5rem;
+  display: inline-block;
+  animation: bounce 0.6s ease-in-out;
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Transitions Vue */
+.slide-up-enter-active, .slide-up-leave-active {
+  transition: all 0.3s ease;
+}
+
+.slide-up-enter-from {
+  opacity: 0;
+  transform: translateY(10px);
+}
+
+.slide-up-leave-to {
+  opacity: 0;
+  transform: translateY(10px);
+}
+
+.result-fade-enter-active, .result-fade-leave-active {
+  transition: all 0.4s ease;
+}
+
+.result-fade-enter-from {
+  opacity: 0;
+  transform: translateY(-10px);
+}
+
+.result-fade-leave-to {
+  opacity: 0;
+  transform: translateY(-10px);
 }
 </style>

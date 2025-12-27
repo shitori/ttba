@@ -21,7 +21,6 @@
             v-else-if="gameMode === 'guest'"
             ref="guestViewRef"
             :room-code="roomCode"
-            :guest-name="guestName"
             :game-state="guestGameState"
             :players="guestPlayers"
             :current-video="currentVideo"
@@ -149,7 +148,6 @@ import GuestView from '@/components/GuestView.vue'
 // ======== GAME MODE STATE ========
 const gameMode = ref<'none' | 'host' | 'guest'>('none') // Mode de jeu actuel
 const roomCode = ref<string>('') // Code de la room
-const guestName = ref<string>('') // Nom de l'invité
 const guestGameState = ref<'waiting' | 'playing' | 'ended' | 'host-disconnected'>('waiting')
 const guestViewRef = ref<InstanceType<typeof GuestView> | null>(null)
 const guestPlayers = ref<any[]>([])
@@ -322,7 +320,7 @@ onUnmounted(() => {
 // ======== HANDLERS ========
 
 // Gestion du mode de jeu
-function handleGameModeSelect(mode: 'host' | 'guest', data?: { roomCode: string; guestName: string }) {
+function handleGameModeSelect(mode: 'host' | 'guest', data?: { roomCode: string }) {
   gameMode.value = mode
 
   if (mode === 'host') {
@@ -333,8 +331,8 @@ function handleGameModeSelect(mode: 'host' | 'guest', data?: { roomCode: string;
   } else if (mode === 'guest' && data) {
     // Rejoindre une room existante
     roomCode.value = data.roomCode
-    guestName.value = data.guestName
-    socket.joinRoom(data.roomCode, data.guestName)
+    const guestUsername = 'Guest_' + Math.random().toString(36).substring(7)
+    socket.joinRoom(data.roomCode, guestUsername)
   }
 }
 
@@ -350,7 +348,6 @@ function generateRoomCode(): string {
 function leaveRoom() {
   gameMode.value = 'none'
   roomCode.value = ''
-  guestName.value = ''
   guestGameState.value = 'waiting'
   guestPlayers.value = []
 
@@ -390,7 +387,6 @@ function handleGuestAnswer(data: { player: string }) {
   socket.sendGuestAnswer({
     selectedPlayer: data.player,
     roomId: roomCode.value,
-    guestName: guestName.value,
     timestamp: new Date().toISOString()
   })
   // Mémoriser le choix
@@ -560,11 +556,6 @@ const runNewGame = () => {
 const checkResult = (isSus: boolean = false) => {
   if (isSus) {
     addSusVote()
-    socket.emit('game:sus_vote', {
-      player: currentVideo.value.player,
-      videoId: currentVideo.value.id,
-      timestamp: new Date().toISOString()
-    })
   }
 
   showResult()
@@ -923,6 +914,51 @@ button[disabled] {
   background: linear-gradient(135deg, rgba(102, 126, 234, 0.15) 0%, rgba(118, 75, 162, 0.15) 100%);
   border-radius: 12px;
   border: 2px solid #667eea;
+}
+
+/* Amélioration de l'affichage du score */
+.score-display {
+  background: linear-gradient(135deg, rgba(102, 126, 234, 0.12) 0%, rgba(118, 75, 162, 0.12) 100%);
+  padding: 0.8rem 1.5rem !important;
+  border-radius: 10px;
+  border: 2px solid rgba(102, 126, 234, 0.3);
+  font-size: 1.3rem !important;
+  font-weight: 800 !important;
+  color: #667eea;
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.15);
+}
+
+.score-display .score-correct {
+  color: #48bb78;
+  font-size: 1.5rem;
+  font-weight: 900;
+}
+
+.score-display.score-animated {
+  animation: scoreGlow 0.4s ease-out;
+}
+
+@keyframes scoreGlow {
+  0% {
+    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.15);
+  }
+  50% {
+    box-shadow: 0 8px 24px rgba(72, 187, 120, 0.4);
+    transform: scale(1.05);
+  }
+  100% {
+    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.15);
+  }
+}
+
+.score-display.bump {
+  animation: scoreBump 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+@keyframes scoreBump {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.15) rotate(-5deg); }
+  100% { transform: scale(1) rotate(0); }
 }
 </style>
 
