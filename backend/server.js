@@ -9,18 +9,27 @@ dotenv.config()
 const PORT = process.env.PORT || 3001
 const FRONTEND_URL = process.env.FRONTEND_URL || 'http://localhost:3000'
 
+console.log('🔧 Configuration:')
+console.log(`   PORT: ${PORT}`)
+console.log(`   FRONTEND_URL: ${FRONTEND_URL}`)
+
 // App setup
 const app = express()
 const httpServer = createServer(app)
+
+// CORS configuration
+const corsOptions = {
+  origin: FRONTEND_URL,
+  methods: ['GET', 'POST'],
+  credentials: true,
+}
+
 const io = new Server(httpServer, {
-  cors: {
-    origin: FRONTEND_URL,
-    methods: ['GET', 'POST'],
-  },
+  cors: corsOptions,
 })
 
 // Middleware
-app.use(cors())
+app.use(cors(corsOptions))
 app.use(express.json())
 
 // ======== ROUTES ========
