@@ -13,14 +13,18 @@ Ce guide vous aidera à déployer votre backend TTBA sur Railway.
 
 ## ✅ Étape 1 : Préparer votre repository
 
-Le fichier `Procfile` a déjà été créé dans le dossier `/backend`. 
+Les fichiers `Procfile` et `railway.json` ont déjà été créés à la racine du projet pour configurer Railway correctement.
+
+Ces fichiers indiquent à Railway de :
+- Déployer **uniquement le backend** (et non le frontend)
+- Exécuter le serveur Node.js avec la commande `node server.js`
 
 Maintenant, vous devez committer et pusher les changements :
 
 ```bash
 # Depuis la racine du projet
-git add backend/Procfile
-git commit -m "Add Procfile for Railway deployment"
+git add Procfile railway.json
+git commit -m "Add Railway configuration files"
 git push origin main
 ```
 

@@ -7,7 +7,7 @@ echo ================================
 echo.
 
 REM Check Node.js
-where node >nul 2>nul
+node --version >nul 2>nul
 if %ERRORLEVEL% NEQ 0 (
     echo ❌ Node.js is not installed
     echo Please install Node.js 16+ from https://nodejs.org
@@ -49,7 +49,7 @@ pause >nul
 
 REM Start backend in new window
 echo Starting backend server...
-start "TTBA Backend" cmd /k "cd backend && npm run dev"
+start "TTBA Backend" cmd /k "cd backend && npm start"
 
 REM Give backend time to start
 timeout /t 2 /nobreak
