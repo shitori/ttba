@@ -28,7 +28,7 @@ npm install
 npm run dev
 ```
 
-L'app est servie par Vite (par défaut `http://localhost:5173`).
+L'app est servie par Vite (par défaut `http://localhost:3000`).
 
 ---
 
