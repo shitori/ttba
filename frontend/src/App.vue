@@ -204,10 +204,47 @@ const { getRandomVideoFromPlayers } = useGameLogic(players, options as any)
 onMounted(() => {
   console.log('🔌 Connecting to backend Socket.IO...')
 
-  // Connexion initiale (sans rejoindre de room)
-  const tempUsername = 'User_' + Math.random().toString(36).substring(7)
-  const tempRoomId = 'temp_' + Date.now()
-  socket.connect(tempUsername, tempRoomId)
+  // Connexion initiale au backend
+  socket.connect()
+
+  // Ajouter un handler global d'erreur
+  window.addEventListener('error', (event) => {
+    const errorStr = String(event.error || event.message || '')
+    const filenameStr = String(event.filename || '')
+
+    // Ignorer TOUTES les erreurs TikTok Embed - elles ne sont pas critiques
+    if (filenameStr.includes('tiktok') ||
+        filenameStr.includes('embed') ||
+        errorStr.includes('tiktok') ||
+        errorStr.includes('ERR_BLOCKED_BY_CLIENT') ||
+        filenameStr.includes('webmssdk') ||
+        filenameStr.includes('mon16-normal')) {
+      console.warn('⚠️ TikTok/Tracking script error (non-critical, ignored)')
+      event.preventDefault()
+      event.stopPropagation()
+      event.stopImmediatePropagation()
+      return false
+    }
+    console.error('❌ Global error caught:', event.error)
+    console.error('Error stack:', event.error?.stack)
+  }, true)  // useCapture = true pour capturer AVANT les autres handlers
+
+  window.addEventListener('unhandledrejection', (event) => {
+    const reasonStr = String(event.reason || '')
+
+    // Ignorer les rejections TikTok et tracking
+    if (reasonStr.includes('tiktok') ||
+        reasonStr.includes('embed') ||
+        reasonStr.includes('ERR_BLOCKED_BY_CLIENT') ||
+        reasonStr.includes('webmssdk') ||
+        reasonStr.includes('mon16-normal')) {
+      console.warn('⚠️ TikTok/Tracking promise rejection (non-critical, ignored)')
+      event.preventDefault()
+      event.stopPropagation()
+      return false
+    }
+    console.error('❌ Unhandled promise rejection:', event.reason)
+  }, true)
 
   // Écouter les événements pour l'hôte
   socket.on('host:room_created', (data: any) => {
@@ -313,8 +350,9 @@ onMounted(() => {
 })
 
 onUnmounted(() => {
-  console.log('🔌 Disconnecting from backend...')
-  socket.disconnect()
+  console.log('🔌 App unmounting (socket remains connected)')
+  // Note: Ne pas appeler socket.disconnect() ici car cela déconnecterait le socket
+  // et causerait des bugs lors des rerender du composant
 })
 
 // ======== HANDLERS ========
@@ -354,9 +392,7 @@ function leaveRoom() {
   // Reconnecter avec un nouveau socket
   socket.disconnect()
   setTimeout(() => {
-    const tempUsername = 'User_' + Math.random().toString(36).substring(7)
-    const tempRoomId = 'temp_' + Date.now()
-    socket.connect(tempUsername, tempRoomId)
+    socket.connect()
   }, 500)
 }
 
@@ -517,66 +553,129 @@ function startNewSession() {
 }
 
 const runNewGame = () => {
-  startGame()
-  const candidate = getRandomVideoFromPlayers()
-  if (candidate) {
-    setCurrentVideo(candidate)
+  try {
+    console.log('🎮 runNewGame started')
 
-    // Préparer les données de la question
-    const questionData = {
-      videoId: candidate.id,
-      videoUrl: candidate.url || `https://www.tiktok.com/v/${candidate.id}`,
-      players: players.value.map(p => ({ username: p.username, susNumber: p.susNumber })),
-      correctPlayer: candidate.player,
-      isShared: candidate.isShared,
-      sharedUser: candidate.sharedUser || '',
-      timestamp: new Date().toISOString()
+    // Appeler startGame() seulement si ce n'est pas déjà lancé
+    if (!isRunningGame.value) {
+      console.log('📺 Starting game...')
+      startGame()
     }
 
-    // Émettre l'événement de démarrage de partie
-    socket.emit('game:start', {
-      players: players.value.map(p => p.username),
-      videoId: candidate.id,
-      timestamp: new Date().toISOString()
-    })
+    console.log('🔍 Getting random video candidate...')
+    const candidate = getRandomVideoFromPlayers()
+    if (candidate) {
+      console.log('✅ Candidate found:', candidate.id)
 
-    // Si on est en mode hôte, envoyer la question aux invités
-    if (gameMode.value === 'host') {
-      socket.sendNewQuestion(questionData)
+      // Préparer les données de la question (inclure susNumber pour guests)
+      const questionData = {
+        videoId: candidate.id,
+        videoUrl: candidate.url || `https://www.tiktok.com/v/${candidate.id}`,
+        players: players.value.map(p => ({ username: p.username, susNumber: p.susNumber })),
+        correctPlayer: candidate.player,
+        isShared: candidate.isShared,
+        sharedUser: candidate.sharedUser || '',
+        timestamp: new Date().toISOString()
+      }
+
+      console.log('📤 About to emit game:start...')
+      // Émettre l'événement de démarrage de partie AVANT de changer la vidéo
+      socket.emit('game:start', {
+        players: players.value.map(p => p.username),
+        videoId: candidate.id,
+        timestamp: new Date().toISOString()
+      })
+      console.log('✅ game:start emitted')
+
+      console.log('📤 About to send new question...')
+      // Si on est en mode hôte, envoyer la question aux invités AVANT de changer la vidéo
+      if (gameMode.value === 'host') {
+        socket.sendNewQuestion(questionData)
+        console.log('✅ host:new_question emitted')
+      }
+
+      // Changer la vidéo EN ARRIÈRE-PLAN AVEC DOUBLE PROTECTION
+      console.log('📝 Setting current video in background...')
+      try {
+        setCurrentVideo(candidate)
+        console.log('✅ Current video set successfully')
+      } catch (videoError) {
+        console.error('❌ Error setting current video (non-critical):', videoError)
+        // Ne pas throw - ce n'est pas critique pour la logique du jeu
+      }
+
+      console.log('✅ runNewGame completed successfully')
+    } else {
+      console.error('❌ No candidate video found!')
+      setError(
+        'Aucune vidéo valide trouvée parmi les joueurs. Chargez d\'autres fichiers ou vérifiez les données.'
+      )
+      isRunningGame.value = false
+      setTimeout(() => clearError(), 5000)
     }
-  } else {
-    setError(
-      'Aucune vidéo valide trouvée parmi les joueurs. Chargez d\'autres fichiers ou vérifiez les données.'
-    )
-    isRunningGame.value = false
-    setTimeout(() => clearError(), 5000)
+  } catch (outerError) {
+    console.error('❌ CRITICAL: Outer error in runNewGame:', outerError)
+    console.trace('Outer error trace:')
+    // Ne JAMAIS laisser une erreur fermer le socket
   }
 }
 
 const checkResult = (isSus: boolean = false) => {
+  console.log('🔍 checkResult called with isSus:', isSus)
+
   if (isSus) {
+    console.log('🛑 Adding sus vote...')
     addSusVote()
   }
 
-  showResult()
+  // Vérification des données avant d'envoyer
+  if (!currentVideo.value.player || !currentVideo.value.id) {
+    console.error('❌ Error: Missing currentVideo data, cannot send game:reveal')
+    return
+  }
 
+  console.log('📤 About to emit game:reveal...')
+  // ÉMETTRE game:reveal IMMÉDIATEMENT
   socket.emit('game:reveal', {
     correctPlayer: currentVideo.value.player,
     videoId: currentVideo.value.id,
     isSus: isSus,
-    players: players.value,
+    players: players.value.map(p => ({ username: p.username, susNumber: p.susNumber })),
     timestamp: new Date().toISOString()
   })
+  console.log('✅ game:reveal emitted')
 
+  // Afficher le résultat (couleurs/animation sur GameBoard)
+  console.log('📺 Showing result...')
+  try {
+    showResult()
+  } catch (error) {
+    console.error('❌ Error showing result:', error)
+  }
+
+  console.log('⏱️ Scheduling hideResult and next question...')
   setTimeout(() => {
-    hideResult()
-    // Ne pas enchaîner automatiquement si la fin de partie a été demandée
+    try {
+      console.log('🔄 Hiding result...')
+      hideResult()
+    } catch (error) {
+      console.error('⚠️ Error hiding result:', error)
+    }
+
     if (!stopAutoContinue.value) {
+      console.log('⏱️ Scheduling runNewGame in 500ms...')
       setTimeout(() => {
-        runNewGame()
+        try {
+          console.log('🎮 Running new game...')
+          runNewGame()
+          console.log('✅ runNewGame completed')
+        } catch (error) {
+          console.error('❌ Error in runNewGame:', error)
+        }
       }, 500)
     }
   }, 3000)
+  console.log('✅ checkResult completed')
 }
 
 // Micro-animations: bump score on increment
@@ -588,30 +687,66 @@ watch(() => gameScore.value.correct, () => {
 })
 
 function selectPlayer(player: { username: string }) {
-  if (showResultVideo.value) return
-  incrementTotal()
-
-  const isCorrect = player.username === currentVideo.value.player
-
-  if (isCorrect) {
-    incrementScore()
-    setCelebratingPlayer(player.username)
-    try { triggerConfetti() } catch (e) {}
-    setTimeout(() => setCelebratingPlayer(null), 1600)
-  } else {
+  console.log('🎯 selectPlayer called with:', player.username)
+  if (showResultVideo.value) {
+    console.log('⚠️ Already showing result, returning')
+    return
   }
 
-  // Émettre l'événement de réponse
-  socket.emit('game:answer', {
-    selectedPlayer: player.username,
-    correctPlayer: currentVideo.value.player,
-    isCorrect: isCorrect,
-    videoId: currentVideo.value.id,
-    currentScore: gameScore.value,
-    timestamp: new Date().toISOString()
-  })
+  const isCorrect = player.username === currentVideo.value.player
+  console.log('✅ Is correct?', isCorrect)
 
-  checkResult()
+  // Vérifier que les données sont valides avant d'émettre
+  if (!currentVideo.value.player || !currentVideo.value.id) {
+    console.error('❌ Error: Invalid currentVideo data, cannot answer')
+    return
+  }
+
+  console.log('📤 About to emit game:answer FIRST...')
+  try {
+    // ÉMETTRE game:answer IMMÉDIATEMENT SANS AUCUN CHANGEMENT D'ÉTAT
+    socket.emit('game:answer', {
+      selectedPlayer: player.username,
+      correctPlayer: currentVideo.value.player,
+      isCorrect: isCorrect,
+      videoId: currentVideo.value.id,
+      scoreCorrect: gameScore.value.correct,
+      scoreTotal: gameScore.value.total,
+      timestamp: new Date().toISOString()
+    })
+    console.log('✅ game:answer emitted successfully')
+  } catch (error) {
+    console.error('❌ Error emitting game:answer:', error)
+    return
+  }
+
+  // ATTENDRE LONGTEMPS (500ms minimum) AVANT DE FAIRE QUOI QUE CE SOIT
+  // Cela laisse le temps au backend de traiter les émissions
+  console.log('⏱️ Waiting 500ms before any state changes...')
+  setTimeout(() => {
+    // PROTÉGER COMPLÈTEMENT CE BLOC
+    try {
+      console.log('📊 Now safe to update state...')
+      incrementTotal()
+
+      if (isCorrect) {
+        console.log('🎉 Incrementing score...')
+        incrementScore()
+        setCelebratingPlayer(player.username)
+        try { triggerConfetti() } catch (e) {
+          console.error('⚠️ Confetti error (not critical):', e)
+        }
+        setTimeout(() => setCelebratingPlayer(null), 1600)
+      }
+
+      console.log('🔍 Calling checkResult()...')
+      checkResult()
+      console.log('✅ checkResult() completed')
+    } catch (error) {
+      console.error('❌ Error in state updates:', error)
+    }
+  }, 500)  // ← AUGMENTÉ À 500ms pour laisser le temps au backend
+  console.log('✅ selectPlayer completed')
 }
 
 // Lightweight confetti

@@ -294,6 +294,8 @@ io.on('connection', (socket) => {
       console.log(`[Socket] 📤 Sending reveal to guests (${room.guests.length} guests)`)
 
       socket.to(player.roomId).emit('game:reveal', revealData)
+      // Envoyer aussi à l'hôte
+      socket.emit('game:reveal', revealData)
     } catch (error) {
       console.error('[Socket] Error in game:reveal:', error.message)
     }
@@ -321,12 +323,12 @@ io.on('connection', (socket) => {
     }
   })
 
-  socket.on('game:answer', () => {
+  socket.on('game:answer', (data) => {
     try {
       const player = connectedPlayers.get(socket.id)
       if (!player) return
 
-      console.log(`[Socket] ${player.username} answered`)
+      console.log(`[Socket] ${player.username} answered: ${data?.selectedPlayer || 'unknown'}`)
     } catch (error) {
       console.error('[Socket] Error in game:answer:', error)
     }

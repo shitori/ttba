@@ -12,7 +12,7 @@ export function useSocket() {
   /**
    * Initialise la connexion Socket.IO
    */
-  function connect(username: string, roomId: string) {
+  function connect() {
     const backendUrl = (import.meta as any).env?.VITE_BACKEND_URL || 'http://localhost:3001'
 
     try {
@@ -27,14 +27,13 @@ export function useSocket() {
         isConnected.value = true
         serverError.value = null
         console.log('✅ Connected to backend')
-
-        // Rejoindre la room
-        socket!.emit('player:join', { username, roomId })
+        // Note: Ne pas rejoindre de room ici - laisser l'app faire ça explicitement
       })
 
-      socket.on('disconnect', () => {
+      socket.on('disconnect', (reason) => {
         isConnected.value = false
-        console.log('❌ Disconnected from backend')
+        console.log(`❌ Disconnected from backend - Reason: ${reason}`)
+        console.trace('Disconnect trace:')
       })
 
       socket.on('error', (error: any) => {
@@ -67,7 +66,7 @@ export function useSocket() {
    * Émet un événement game:start
    */
   function startGame(roomId: string) {
-    if (socket && isConnected.value) {
+    if (socket) {
       socket.emit('game:start', { roomId })
     }
   }
@@ -76,7 +75,7 @@ export function useSocket() {
    * Émet un événement game:answer
    */
   function sendAnswer(answer: string, roomId: string) {
-    if (socket && isConnected.value) {
+    if (socket) {
       socket.emit('game:answer', { answer, roomId })
     }
   }
@@ -85,7 +84,7 @@ export function useSocket() {
    * Émet un événement game:score_update
    */
   function updateScore(scoreIncrement: number, roomId: string) {
-    if (socket && isConnected.value) {
+    if (socket) {
       socket.emit('game:score_update', { scoreIncrement, roomId })
     }
   }
@@ -94,7 +93,7 @@ export function useSocket() {
    * Émet un événement game:end
    */
   function endGame(roomId: string) {
-    if (socket && isConnected.value) {
+    if (socket) {
       socket.emit('game:end', { roomId })
     }
   }
@@ -131,10 +130,10 @@ export function useSocket() {
    * Émet un événement socket générique
    */
   function emit(event: string, data?: any) {
-    if (socket && isConnected.value) {
+    if (socket) {
       socket.emit(event, data)
     } else {
-      console.warn(`Cannot emit '${event}': socket not connected`)
+      console.warn(`Cannot emit '${event}': socket is null`)
     }
   }
 
@@ -142,7 +141,7 @@ export function useSocket() {
    * Créer une room en tant qu'hôte
    */
   function createRoom(roomId: string, username: string) {
-    if (socket && isConnected.value) {
+    if (socket) {
       socket.emit('host:create', { roomId, username })
     }
   }
@@ -151,7 +150,7 @@ export function useSocket() {
    * Rejoindre une room en tant qu'invité
    */
   function joinRoom(roomId: string, username: string) {
-    if (socket && isConnected.value) {
+    if (socket) {
       socket.emit('guest:join', { roomId, username })
     }
   }
@@ -160,7 +159,7 @@ export function useSocket() {
    * Envoyer une nouvelle question (hôte uniquement)
    */
   function sendNewQuestion(data: any) {
-    if (socket && isConnected.value) {
+    if (socket) {
       socket.emit('host:new_question', data)
     }
   }
@@ -169,7 +168,7 @@ export function useSocket() {
    * Envoyer une réponse (invité uniquement)
    */
   function sendGuestAnswer(data: any) {
-    if (socket && isConnected.value) {
+    if (socket) {
       socket.emit('guest:answer', data)
     }
   }

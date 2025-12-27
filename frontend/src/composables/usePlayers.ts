@@ -16,10 +16,12 @@ export const usePlayers = () => {
   // Charger les résultats sauvegardés
   const loadPlayer = (): void => {
     try {
-      const saved = localStorage.getItem(STORAGE_KEY)
-      if (saved) {
-        players.value = JSON.parse(saved)
-      }
+      // Disabled: localStorage causes quota exceeded errors
+      // const saved = localStorage.getItem(STORAGE_KEY)
+      // if (saved) {
+      //   players.value = JSON.parse(saved)
+      // }
+      console.log('✅ Player storage initialized (in-memory only)')
     } catch (error) {
       console.error('Erreur chargement résultats:', error)
     }
@@ -27,7 +29,13 @@ export const usePlayers = () => {
 
   // Sauvegarder les résultats
   const savePlayer = (): void => {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(players.value))
+    try {
+      // Disabled: localStorage causes quota exceeded errors
+      // localStorage.setItem(STORAGE_KEY, JSON.stringify(players.value))
+      console.log('📝 Player saved to memory (localStorage disabled to avoid quota issues)')
+    } catch (error) {
+      console.error('⚠️ Error saving player:', error)
+    }
   }
 
   // Ajouter un résultat
