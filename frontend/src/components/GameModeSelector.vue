@@ -90,8 +90,17 @@ function joinRoom() {
   max-width: 900px;
   margin: 0 auto;
   padding: 2rem;
-  background: rgba(255, 255, 255, 0.95);
+  background: var(--color-surface);
   backdrop-filter: blur(10px);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-soft);
+}
+
+@media screen and (max-width: 768px) {
+  .game-mode-selector {
+    padding: 1rem;
+    margin: 0;
+  }
 }
 
 .modes-container {
@@ -100,8 +109,15 @@ function joinRoom() {
   gap: 2rem;
 }
 
+@media screen and (max-width: 768px) {
+  .modes-container {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+  }
+}
+
 .mode-card {
-  background: linear-gradient(135deg, #f8f9ff 0%, #f0f2ff 100%);
+  background: var(--color-card-bg);
   border: 3px solid transparent;
   border-radius: 16px;
   padding: 2rem;
@@ -112,6 +128,12 @@ function joinRoom() {
   overflow: hidden;
 }
 
+@media screen and (max-width: 768px) {
+  .mode-card {
+    padding: 1.5rem;
+  }
+}
+
 .mode-card::before {
   content: '';
   position: absolute;
@@ -119,14 +141,14 @@ function joinRoom() {
   left: 0;
   width: 100%;
   height: 4px;
-  background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+  background: var(--grad-primary);
   transform: scaleX(0);
   transition: transform 0.3s ease;
 }
 
 .mode-card:hover {
   transform: translateY(-8px);
-  border-color: #667eea;
+  border-color: var(--color-primary);
   box-shadow: 0 12px 35px rgba(102, 126, 234, 0.3);
 }
 
@@ -148,12 +170,12 @@ function joinRoom() {
 .mode-title {
   font-size: 1.5rem;
   font-weight: 700;
-  color: #667eea;
+  color: var(--color-primary);
   margin-bottom: 1rem;
 }
 
 .mode-description {
-  color: #666;
+  color: var(--color-muted);
   line-height: 1.6;
   margin-bottom: 1.5rem;
 }
@@ -161,7 +183,7 @@ function joinRoom() {
 .mode-badge {
   display: inline-block;
   padding: 0.5rem 1.5rem;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: var(--grad-primary);
   color: white;
   border-radius: 20px;
   font-weight: 700;
@@ -169,7 +191,7 @@ function joinRoom() {
 }
 
 .mode-badge.guest {
-  background: linear-gradient(135deg, #48bb78 0%, #38a169 100%);
+  background: var(--grad-success);
 }
 
 .modal-card {
@@ -177,13 +199,25 @@ function joinRoom() {
   margin: 0 auto;
 }
 
+@media screen and (max-width: 768px) {
+  .modal-card {
+    margin: 0 1rem;
+    max-width: calc(100% - 2rem);
+  }
+}
+
 .modal-card-head {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: var(--grad-primary);
   color: white;
+  border-bottom: 1px solid var(--color-border);
 }
 
 .modal-card-title {
   color: white;
+}
+
+.modal-card-body {
+  background: var(--color-surface);
 }
 
 .input.is-large {
@@ -192,12 +226,21 @@ function joinRoom() {
   font-weight: 700;
   letter-spacing: 2px;
   text-transform: uppercase;
+  background-color: var(--color-input-bg);
+  color: var(--color-text);
+  border-color: var(--color-input-border);
 }
 
 .modal-card-foot {
-  background: white;
-  border-top: none;
+  background: var(--color-surface);
+  border-top: 1px solid var(--color-border);
   padding: 1.5rem;
+}
+
+@media (prefers-color-scheme: light) {
+  .mode-card {
+    background: linear-gradient(135deg, #f8f9ff 0%, #f0f2ff 100%);
+  }
 }
 </style>
 

@@ -151,14 +151,26 @@ defineExpose({
   min-height: 70vh;
 }
 
+@media screen and (max-width: 768px) {
+  .guest-view {
+    min-height: 60vh;
+  }
+}
 
 /* États d'attente */
 .waiting-state, .ended-state, .disconnected-state {
   text-align: center;
   padding: 4rem 2rem;
-  background: rgba(255,255,255,0.9);
+  background: var(--color-surface);
   border-radius: var(--radius-md);
   box-shadow: var(--shadow-soft);
+  border: 1px solid var(--color-border);
+}
+
+@media screen and (max-width: 768px) {
+  .waiting-state, .ended-state, .disconnected-state {
+    padding: 2rem 1rem;
+  }
 }
 
 .waiting-animation {
@@ -168,13 +180,21 @@ defineExpose({
   margin: 0 auto 2rem;
 }
 
+@media screen and (max-width: 768px) {
+  .waiting-animation {
+    width: 80px;
+    height: 80px;
+    margin: 0 auto 1.5rem;
+  }
+}
+
 .pulse-circle {
   position: absolute;
   top: 0;
   left: 0;
   width: 100%;
   height: 100%;
-  border: 4px solid #667eea;
+  border: 4px solid var(--color-primary);
   border-radius: 50%;
   animation: pulse 2s ease-out infinite;
 }
@@ -199,6 +219,12 @@ defineExpose({
   animation: rotate 3s linear infinite;
 }
 
+@media screen and (max-width: 768px) {
+  .waiting-icon {
+    font-size: 2.5rem;
+  }
+}
+
 @keyframes rotate {
   from { transform: translate(-50%, -50%) rotate(0deg); }
   to { transform: translate(-50%, -50%) rotate(360deg); }
@@ -207,13 +233,25 @@ defineExpose({
 .waiting-title, .ended-title, .disconnected-title {
   font-size: 2rem;
   font-weight: 800;
-  color: #667eea;
+  color: var(--color-primary);
   margin-bottom: 1rem;
+}
+
+@media screen and (max-width: 768px) {
+  .waiting-title, .ended-title, .disconnected-title {
+    font-size: 1.5rem;
+  }
 }
 
 .waiting-text, .disconnected-text {
   font-size: 1.2rem;
-  color: #666;
+  color: var(--color-muted);
+}
+
+@media screen and (max-width: 768px) {
+  .waiting-text, .disconnected-text {
+    font-size: 1rem;
+  }
 }
 
 /* Score final */
@@ -223,37 +261,69 @@ defineExpose({
   animation: bounce 1s ease-in-out;
 }
 
+@media screen and (max-width: 768px) {
+  .ended-icon {
+    font-size: 3.5rem;
+  }
+}
+
 @keyframes bounce {
   0%, 100% { transform: translateY(0); }
   50% { transform: translateY(-20px); }
 }
 
 .final-score {
-  background: linear-gradient(135deg, rgba(102, 126, 234, 0.1) 0%, rgba(118, 75, 162, 0.1) 100%);
+  background: linear-gradient(135deg, rgba(102, 126, 234, 0.15) 0%, rgba(118, 75, 162, 0.15) 100%);
   padding: 2rem;
   border-radius: 16px;
   margin: 2rem auto;
   max-width: 400px;
+  border: 1px solid var(--color-border);
+}
+
+@media screen and (max-width: 768px) {
+  .final-score {
+    padding: 1.5rem;
+    margin: 1.5rem auto;
+  }
 }
 
 .score-label {
   font-size: 1rem;
-  color: #666;
+  color: var(--color-muted);
   margin-bottom: 0.5rem;
+}
+
+@media screen and (max-width: 768px) {
+  .score-label {
+    font-size: 0.9rem;
+  }
 }
 
 .score-value {
   font-size: 3rem;
   font-weight: 900;
-  color: #667eea;
+  color: var(--color-primary);
   margin: 0;
+}
+
+@media screen and (max-width: 768px) {
+  .score-value {
+    font-size: 2rem;
+  }
 }
 
 .score-percentage {
   font-size: 1.5rem;
   font-weight: 700;
-  color: #764ba2;
+  color: var(--color-secondary);
   margin-top: 0.5rem;
+}
+
+@media screen and (max-width: 768px) {
+  .score-percentage {
+    font-size: 1.2rem;
+  }
 }
 
 /* État déconnecté */
@@ -263,6 +333,12 @@ defineExpose({
   animation: shake 0.5s ease-in-out;
 }
 
+@media screen and (max-width: 768px) {
+  .disconnected-icon {
+    font-size: 3.5rem;
+  }
+}
+
 @keyframes shake {
   0%, 100% { transform: translateX(0); }
   25% { transform: translateX(-10px); }
@@ -270,14 +346,14 @@ defineExpose({
 }
 
 .disconnected-title {
-  color: #f56565;
+  color: var(--color-danger);
 }
 
 .check-icon {
   margin-top: 1rem;
   text-align: center;
   font-size: 0.95rem;
-  color: #6b7280;
+  color: var(--color-muted);
   background: rgba(102, 126, 234, 0.08);
   border: 1px dashed rgba(102, 126, 234, 0.35);
   padding: 0.6rem 1rem;
@@ -296,7 +372,7 @@ defineExpose({
   background: linear-gradient(135deg, rgba(72, 187, 120, 0.12) 0%, rgba(72, 187, 120, 0.06) 100%);
   border: 1px solid rgba(72, 187, 120, 0.3);
   border-radius: 10px;
-  color: #2d6a4f;
+  color: var(--color-accent);
   font-weight: 600;
   animation: slideUp 0.4s ease-out;
 }
@@ -314,11 +390,13 @@ defineExpose({
 
 .answer-text {
   font-weight: 700;
+  color: var(--color-text);
 }
 
 .waiting-text {
   font-size: 0.85rem;
   opacity: 0.8;
+  color: var(--color-muted);
 }
 
 /* Banner de résultat personnalisé */
@@ -336,19 +414,23 @@ defineExpose({
 .guest-result-banner.correct {
   background: linear-gradient(135deg, rgba(72, 187, 120, 0.15) 0%, rgba(72, 187, 120, 0.08) 100%);
   border: 2px solid rgba(72, 187, 120, 0.4);
-  color: #2d6a4f;
+  color: var(--color-accent);
 }
 
 .guest-result-banner.incorrect {
   background: linear-gradient(135deg, rgba(245, 101, 101, 0.12) 0%, rgba(245, 101, 101, 0.06) 100%);
   border: 2px solid rgba(245, 101, 101, 0.3);
-  color: #7f1d1d;
+  color: var(--color-danger);
 }
 
 .result-emoji {
   font-size: 1.5rem;
   display: inline-block;
   animation: bounce 0.6s ease-in-out;
+}
+
+.result-text {
+  color: var(--color-text);
 }
 
 @keyframes slideUp {

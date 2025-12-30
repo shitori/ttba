@@ -1,9 +1,9 @@
 <template>
   <div class="box has-shadow options-list">
-    <div class="content has-text-centered mb-5 options-animated">
-      <p class="subtitle is-5 upload-title">⚙️ Options de jeu</p>
-      <div class="columns is-centered">
-        <div class="column">
+    <div class="content has-text-centered mb-4 mb-5-tablet options-animated">
+      <p class="subtitle is-5 is-size-6-mobile upload-title">⚙️ Options de jeu</p>
+      <div class="columns is-mobile is-multiline is-centered">
+        <div class="column is-12-mobile is-5-tablet">
           <label class="label">Options de TikToks</label>
           <div class="control">
             <div class="select is-fullwidth animated-select">
@@ -28,7 +28,7 @@
 
         </div>
 
-        <div class="column is-7" v-show="localOptions.tiktokOption !== 'Like'">
+        <div class="column is-12-mobile is-7-tablet" v-show="localOptions.tiktokOption !== 'Like'">
           <label class="label">Whitelist (utilisateurs détectés)</label>
           <div class="whitelist-list control">
             <template v-if="sharedUsersSorted.length === 0">
@@ -85,6 +85,18 @@ function onToggleSus() {
 .options-list {
   max-height: 350px;
   overflow-y: auto;
+  background: var(--color-surface);
+  color: var(--color-text);
+}
+
+.upload-title {
+  color: var(--color-primary);
+  font-weight: 700;
+}
+
+.label {
+  color: var(--color-text);
+  font-weight: 600;
 }
 
 .options-animated {
@@ -99,10 +111,14 @@ function onToggleSus() {
   padding: 0.6rem 0.9rem;
   border-radius: 10px;
   transition: box-shadow 0.25s ease, transform 0.2s ease;
+  background-color: var(--color-input-bg);
+  color: var(--color-text);
+  border-color: var(--color-input-border);
 }
 .animated-select select:focus {
   box-shadow: 0 8px 24px rgba(102, 126, 234, 0.18);
   transform: translateY(-2px);
+  border-color: var(--color-primary);
 }
 
 .toggle-switch {
@@ -112,14 +128,17 @@ function onToggleSus() {
   position: relative;
   cursor: pointer;
   user-select: none;
+  border: none;
+  background: transparent;
 }
 .toggle-switch .switch-track {
   position: absolute;
   inset: 0;
   border-radius: 999px;
-  background: #e6e6e6;
-  transition: background 0.25s ease;
-  box-shadow: inset 0 2px 6px rgba(0, 0, 0, 0.06);
+  background: var(--color-muted);
+  opacity: 0.3;
+  transition: background 0.25s ease, opacity 0.25s ease;
+  box-shadow: inset 0 2px 6px rgba(0, 0, 0, 0.1);
 }
 .toggle-switch .switch-thumb {
   position: absolute;
@@ -130,17 +149,46 @@ function onToggleSus() {
   border-radius: 50%;
   background: white;
   transition: transform 0.25s cubic-bezier(.2, .9, .2, 1), box-shadow 0.2s ease;
-  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.12);
+  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
 }
 .toggle-switch.on .switch-track {
-  background: linear-gradient(90deg, #48bb78, #2f9a60);
+  background: var(--grad-success);
+  opacity: 1;
 }
 .toggle-switch.on .switch-thumb {
   transform: translateX(26px);
 }
 
-.whitelist-list .whitelist-tag { margin: 4px; }
+.hint {
+  color: var(--color-muted);
+  font-weight: 600;
+}
 
-.inline-checkbox { display: flex; align-items: center; gap: 0.5rem; }
-.inline-checkbox .tag-label { margin-left: 6px; font-weight: 700; color: #4a4a4a }
+.whitelist-list {
+  background: var(--color-card-bg);
+  padding: 1rem;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--color-border);
+}
+
+.whitelist-list .whitelist-tag {
+  margin: 4px;
+  background-color: var(--color-card-bg);
+  border: 1px solid var(--color-border);
+}
+
+.inline-checkbox {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+.inline-checkbox .tag-label {
+  margin-left: 6px;
+  font-weight: 700;
+  color: var(--color-text);
+}
+
+.has-text-grey {
+  color: var(--color-muted) !important;
+}
 </style>

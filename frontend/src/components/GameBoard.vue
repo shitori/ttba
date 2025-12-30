@@ -1,25 +1,25 @@
 <template>
   <div class="box has-shadow">
-    <div class="content has-text-centered mb-5">
-      <div class="level">
+    <div class="content has-text-centered mb-4 mb-5-tablet">
+      <div class="level is-mobile">
         <div class="level-left">
           <div class="level-item">
-            <button class="button is-danger" @click="$emit('end')">🎮 Fin de partie</button>
+            <button class="button is-danger is-small-mobile" @click="$emit('end')">🎮 Fin</button>
           </div>
         </div>
         <div class="level-item">
-          <h1 class="subtitle">🎮 Partie en cours</h1>
+          <h1 class="subtitle is-size-5-mobile">🎮 Partie en cours</h1>
         </div>
         <div class="level-right">
           <div class="level-item">
-            <p class="subtitle score-display">📊 {{ score.correct }}/{{ score.total }}</p>
+            <p class="subtitle score-display is-size-6-mobile">📊 {{ score.correct }}/{{ score.total }}</p>
           </div>
         </div>
       </div>
     </div>
 
-    <div class="columns">
-      <div class="column is-4">
+    <div class="columns is-mobile is-multiline">
+      <div class="column is-12-mobile is-4-tablet">
         <div class="tiktok-wrapper">
           <!-- Iframe TikTok réactivée, chargement léger et isolé -->
           <iframe
@@ -39,14 +39,14 @@
         </div>
       </div>
 
-      <div class="column is-8 has-text-centered">
-        <h1 class="title" v-if="!currentVideo.isShared">❤️ Qui a aimé cette vidéo ?</h1>
-        <h1 class="title" v-else>📱 Qui a envoyé cette vidéo à <span class="is-danger">{{
+      <div class="column is-12-mobile is-8-tablet has-text-centered">
+        <h1 class="title is-size-4-mobile" v-if="!currentVideo.isShared">❤️ Qui a aimé cette vidéo ?</h1>
+        <h1 class="title is-size-4-mobile" v-else>📱 Qui a envoyé cette vidéo à <span class="is-danger">{{
             currentVideo.sharedUser
           }}</span> ?</h1>
 
-        <div class="columns is-multiline">
-          <div class="column is-4" v-for="(player, index) in players" :key="player.username || index">
+        <div class="columns is-mobile is-multiline">
+          <div class="column is-6-mobile is-4-tablet" v-for="(player, index) in players" :key="player.username || index">
             <div
                 class="card is-clickable player-btn"
                 role="button"
@@ -64,9 +64,9 @@
               <div class="card-content">
                 <div class="content">
                   <p class="is-vcentered">
-                    <span class="is-size-4">{{ player.username }}</span>
+                    <span class="is-size-4 is-size-5-mobile">{{ player.username }}</span>
                     <br>
-                    <span class="has-text-left" v-if="susMode"><strong>#sus:</strong> {{ player.susNumber }}</span>
+                    <span class="has-text-left is-size-7-mobile" v-if="susMode"><strong>#sus:</strong> {{ player.susNumber }}</span>
                   </p>
                 </div>
               </div>
@@ -74,14 +74,14 @@
           </div>
         </div>
 
-        <div class="columns">
+        <div class="columns is-mobile">
           <div class="column">
-            <button class="button is-large is-fullwidth mb-3 is-warning skip-btn" :disabled="showResult"
-                    @click="$emit('reveal', false)">⏭️ Passer le tiktok
+            <button class="button is-large is-medium-mobile is-fullwidth mb-3 is-warning skip-btn" :disabled="showResult"
+                    @click="$emit('reveal', false)">⏭️ Passer
             </button>
           </div>
-          <div class="column is-half" v-if="susMode && !isGuest">
-            <button class="button is-large is-fullwidth mb-3 is-danger skip-btn" :disabled="showResult"
+          <div class="column is-12-mobile is-half-tablet" v-if="susMode && !isGuest">
+            <button class="button is-large is-medium-mobile is-fullwidth mb-3 is-danger skip-btn" :disabled="showResult"
                     @click="$emit('reveal', true)">🛑 #sus
             </button>
           </div>
@@ -180,6 +180,13 @@ onUnmounted(() => {
   padding-top: 177.78%;
 }
 
+@media screen and (max-width: 768px) {
+  .tiktok-wrapper {
+    max-width: 100%;
+    margin-bottom: 1rem;
+  }
+}
+
 .tiktok-wrapper iframe {
   position: absolute;
   top: 0;
@@ -197,17 +204,33 @@ onUnmounted(() => {
   display: flex;
   align-items: center;
   justify-content: center;
-  background: linear-gradient(135deg, #fff6e6, #ffe8d6);
+  background: linear-gradient(135deg, rgba(246, 173, 85, 0.15), rgba(237, 137, 54, 0.15));
+  border: 2px solid var(--color-warning);
   border-radius: 12px;
   padding: 1rem;
   text-align: center;
+}
+
+.fallback-inner {
+  color: var(--color-text);
+}
+
+.fallback-inner p {
+  color: var(--color-text);
+  font-weight: 600;
+}
+
+@media (prefers-color-scheme: light) {
+  .tiktok-fallback {
+    background: linear-gradient(135deg, #fff6e6, #ffe8d6);
+  }
 }
 
 .btn-fun {
   padding: .6rem 1rem;
   border-radius: 10px;
   font-weight: 800;
-  background: linear-gradient(135deg, #48bb78, #2f9a60);
+  background: var(--grad-success);
   color: #fff;
   box-shadow: 0 8px 24px rgba(72, 187, 120, 0.25);
   transition: transform .25s, box-shadow .25s;
@@ -226,11 +249,28 @@ onUnmounted(() => {
   transition: transform 240ms cubic-bezier(.2, .9, .2, 1), box-shadow 240ms, background 240ms;
   cursor: pointer;
   border-radius: var(--radius-md);
+  min-height: 80px;
+}
+
+@media screen and (max-width: 768px) {
+  .player-btn {
+    min-height: 70px;
+  }
+
+  .player-btn .card-content {
+    padding: 0.75rem;
+  }
 }
 
 .player-btn:hover {
   transform: translateY(-8px) scale(1.02) rotate(-0.6deg);
   box-shadow: var(--shadow-strong);
+}
+
+@media screen and (max-width: 768px) {
+  .player-btn:hover {
+    transform: translateY(-4px) scale(1.01);
+  }
 }
 
 .player-btn:active {

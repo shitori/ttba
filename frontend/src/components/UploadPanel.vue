@@ -33,7 +33,7 @@
     <!-- Results Section -->
     <div v-if="submissionInfo && !isProcessing" class="mt-5">
       <div class="box has-background-success-light success-box">
-        <p class="has-text-weight-bold mb-3" style="color: #257942;">✅ {{ submissionInfo.status }}</p>
+        <p class="has-text-weight-bold mb-3 success-message">✅ {{ submissionInfo.status }}</p>
         <p class="has-text-grey is-size-7 mt-2">Total d'objets sauvegardés: <strong>{{ submissionInfo.totalResults }}</strong></p>
       </div>
     </div>
@@ -87,42 +87,44 @@ defineEmits<{
 
 .upload-title {
   font-weight: 700;
-  color: #667eea;
+  color: var(--color-primary);
   font-size: 1.2rem !important;
 }
 
 .upload-file {
   transition: all 0.3s ease;
-  border: 2px dashed #667eea;
+  border: 2px dashed var(--color-primary);
+  background: var(--color-card-bg);
 }
 .upload-file:hover {
-  border-color: #764ba2;
-  background: rgba(102, 126, 234, 0.02);
+  border-color: var(--color-secondary);
+  background: rgba(102, 126, 234, 0.08);
   transform: scale(1.01);
 }
 
 .file-cta {
-  background-color: #3273dc;
-  border-color: #3273dc;
+  background-color: var(--color-primary);
+  border-color: var(--color-primary);
   color: white;
   transition: all 0.3s ease;
 }
 .file-cta:hover {
-  background-color: #2366d1;
-  border-color: #2366d1;
+  background-color: var(--color-secondary);
+  border-color: var(--color-secondary);
   transform: scale(1.02);
-  box-shadow: 0 6px 20px rgba(50, 115, 220, 0.4);
+  box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
 }
 
 .file-input:focus + .file-cta {
-  border-color: #3273dc;
-  box-shadow: 0 0 0.5em rgba(50, 115, 220, 0.25);
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0.5em rgba(102, 126, 234, 0.25);
 }
 
 .file-input:disabled + .file-cta {
-  background-color: #ccc;
-  border-color: #ccc;
+  background-color: var(--color-muted);
+  border-color: var(--color-muted);
   cursor: not-allowed;
+  opacity: 0.6;
 }
 
 .loading-section {
@@ -142,12 +144,33 @@ defineEmits<{
 
 .loading-text {
   font-weight: 600;
-  color: #667eea;
+  color: var(--color-primary);
   animation: pulse 1.5s ease-in-out infinite;
 }
 @keyframes pulse {
   0%, 100% { opacity: 1; }
   50% { opacity: 0.7; }
+}
+
+.success-box {
+  background-color: rgba(72, 187, 120, 0.15) !important;
+  border: 1px solid rgba(72, 187, 120, 0.3);
+  border-radius: var(--radius-sm);
+  color: var(--color-text);
+}
+
+.success-message {
+  color: var(--color-accent);
+}
+
+.error-notification {
+  border-radius: var(--radius-sm);
+  animation: shake 0.3s ease-in-out;
+}
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  25% { transform: translateX(-5px); }
+  75% { transform: translateX(5px); }
 }
 
 .success-box {

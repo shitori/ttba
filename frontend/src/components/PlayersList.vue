@@ -1,7 +1,7 @@
 <template>
   <div class="box has-shadow data-box">
-    <div class="content has-text-centered mb-5">
-      <p class="subtitle is-5 data-title">📊 Joueurs sauvegardées ({{ players.length }})</p>
+    <div class="content has-text-centered mb-4 mb-5-tablet">
+      <p class="subtitle is-5 is-size-6-mobile data-title">📊 Joueurs sauvegardées ({{ players.length }})</p>
     </div>
 
     <div v-if="players.length === 0" class="content has-text-centered empty-state">
@@ -13,12 +13,12 @@
       <div v-for="(item, index) in players" :key="item.username || index"
            class="box mb-3 user-card player-card">
         <div class="card-header">
-          <p class="has-text-weight-bold mb-2 card-number">👤 Joueur #{{ index + 1 }}</p>
+          <p class="has-text-weight-bold mb-2 card-number is-size-6-mobile">👤 Joueur #{{ index + 1 }}</p>
         </div>
 
         <div class="card-body">
           <div class="mb-3 player-info">
-            <p class="user-info-text">
+            <p class="user-info-text is-size-7-mobile">
               <strong>🎮 Username:</strong> <span class="username-value">{{ item.username || '(N/A)' }}</span>
             </p>
           </div>
@@ -35,7 +35,7 @@
           </div>
 
           <details class="mb-3 details-box">
-            <summary class="details-summary">📝 Voir détails</summary>
+            <summary class="details-summary is-size-7-mobile">📝 Voir détails</summary>
             <pre class="details-content">{{ formatObject(item) }}</pre>
           </details>
 
@@ -66,13 +66,15 @@ defineEmits<{ (e: 'remove', index: number): void; (e: 'clear'): void }>()
 <style scoped>
 .data-box {
   position: relative;
+  background: var(--color-surface);
+  color: var(--color-text);
 }
 
 .data-title {
   font-weight: 700;
-  color: #667eea;
+  color: var(--color-primary);
   font-size: 1.2rem !important;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: var(--grad-primary);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
@@ -83,20 +85,38 @@ defineEmits<{ (e: 'remove', index: number): void; (e: 'clear'): void }>()
   overflow-y: auto;
 }
 
+@media screen and (max-width: 768px) {
+  .results-list {
+    max-height: 300px;
+  }
+}
+
 .empty-state {
   padding: 2rem;
-  background: linear-gradient(135deg, rgba(102, 126, 234, 0.05) 0%, rgba(118, 75, 162, 0.05) 100%);
+  background: linear-gradient(135deg, rgba(102, 126, 234, 0.08) 0%, rgba(118, 75, 162, 0.08) 100%);
   border-radius: 12px;
+  border: 1px solid var(--color-border);
+}
+
+@media screen and (max-width: 768px) {
+  .empty-state {
+    padding: 1.5rem;
+  }
 }
 
 .empty-text {
   font-size: 2rem;
   margin-bottom: 0.5rem;
+  color: var(--color-muted);
+}
+
+.has-text-grey {
+  color: var(--color-muted) !important;
 }
 
 .player-card {
-  background: linear-gradient(135deg, #f8f9ff 0%, #f0f2ff 100%) !important;
-  border: 2px solid transparent;
+  background: var(--color-card-bg) !important;
+  border: 2px solid var(--color-border);
   border-radius: 12px;
   overflow: hidden;
   position: relative;
@@ -110,14 +130,14 @@ defineEmits<{ (e: 'remove', index: number): void; (e: 'clear'): void }>()
   top: 0;
   width: 4px;
   height: 100%;
-  background: linear-gradient(180deg, #667eea 0%, #764ba2 100%);
+  background: var(--grad-primary);
   transition: width 0.3s ease;
 }
 
 .player-card:hover {
   transform: translateY(-8px) translateX(4px);
   box-shadow: 0 12px 30px rgba(102, 126, 234, 0.3);
-  border-color: #667eea;
+  border-color: var(--color-primary);
 }
 
 .player-card:hover::before {
@@ -126,11 +146,11 @@ defineEmits<{ (e: 'remove', index: number): void; (e: 'clear'): void }>()
 
 .card-header {
   padding-bottom: 0.75rem;
-  border-bottom: 2px solid rgba(102, 126, 234, 0.1);
+  border-bottom: 2px solid var(--color-border);
 }
 
 .card-number {
-  color: #667eea;
+  color: var(--color-primary);
   font-size: 1.1rem;
 }
 
@@ -139,18 +159,23 @@ defineEmits<{ (e: 'remove', index: number): void; (e: 'clear'): void }>()
 }
 
 .player-info {
-  background: white;
+  background: var(--color-input-bg);
   padding: 0.75rem;
   border-radius: 8px;
   transition: all 0.3s ease;
+  border: 1px solid var(--color-border);
 }
 
 .player-card:hover .player-info {
-  background: rgba(102, 126, 234, 0.05);
+  background: rgba(102, 126, 234, 0.08);
+}
+
+.user-info-text {
+  color: var(--color-text);
 }
 
 .username-value {
-  color: #764ba2;
+  color: var(--color-secondary);
   font-weight: 700;
   font-size: 1.05rem;
 }
@@ -163,65 +188,92 @@ defineEmits<{ (e: 'remove', index: number): void; (e: 'clear'): void }>()
 }
 
 .stat-box {
-  background: white;
+  background: var(--color-input-bg);
   padding: 0.75rem;
   border-radius: 8px;
   text-align: center;
-  border: 2px solid rgba(102, 126, 234, 0.1);
+  border: 2px solid var(--color-border);
   transition: all 0.3s ease;
 }
 
 .player-card:hover .stat-box {
-  border-color: #667eea;
-  background: linear-gradient(135deg, rgba(102, 126, 234, 0.05) 0%, rgba(118, 75, 162, 0.05) 100%);
+  border-color: var(--color-primary);
+  background: rgba(102, 126, 234, 0.08);
 }
 
 .stat-value {
   font-size: 1.5rem;
   font-weight: 800;
-  color: #667eea;
+  color: var(--color-primary);
   margin: 0;
 }
 
 .stat-label {
   font-size: 0.75rem;
-  color: #999;
+  color: var(--color-muted);
   margin: 0.25rem 0 0 0;
   font-weight: 600;
 }
 
 .details-box {
-  background: white;
+  background: var(--color-input-bg);
   padding: 0.75rem;
   border-radius: 8px;
-  border: 1px solid #e0e0e0;
+  border: 1px solid var(--color-border);
+}
+
+.details-summary {
+  color: var(--color-text);
+  cursor: pointer;
+  font-weight: 600;
+}
+
+.details-content {
+  color: var(--color-text);
+  background: var(--color-bg);
+  padding: 0.5rem;
+  border-radius: 4px;
+  margin-top: 0.5rem;
+  font-size: 0.85rem;
+  overflow-x: auto;
 }
 
 .delete-btn {
-  background: white;
-  border: 2px solid #f56565 !important;
-  color: #f56565 !important;
+  background: var(--color-surface) !important;
+  border: 2px solid var(--color-danger) !important;
+  color: var(--color-danger) !important;
   font-weight: 700;
   transition: all 0.3s ease;
 }
 
 .delete-btn:hover {
-  background: #f56565 !important;
+  background: var(--color-danger) !important;
   color: white !important;
   transform: translateY(-2px);
   box-shadow: 0 6px 15px rgba(245, 101, 101, 0.4);
 }
 
 .clear-all-btn {
-  background: linear-gradient(135deg, #ed8936 0%, #d69e2e 100%) !important;
+  background: var(--grad-warning) !important;
   border: none;
   font-weight: 700;
   box-shadow: 0 4px 15px rgba(237, 137, 54, 0.3);
   transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+  color: #1a202c !important;
 }
 
 .clear-all-btn:hover {
   transform: translateY(-4px) scale(1.02);
   box-shadow: 0 8px 25px rgba(237, 137, 54, 0.5);
+}
+
+@media (prefers-color-scheme: light) {
+  .player-card {
+    background: linear-gradient(135deg, #f8f9ff 0%, #f0f2ff 100%) !important;
+  }
+
+  .player-info, .stat-box, .details-box {
+    background: white;
+  }
 }
 </style>

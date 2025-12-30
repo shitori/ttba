@@ -2,8 +2,8 @@
   <div class="app-container">
     <section class="hero is-fullheight is-gradient">
       <div class="hero-body">
-        <div class="container is-fluid">
-          <h1 class="title is-2 has-text-centered mb-5 main-title">🎮 TTBA Game</h1>
+        <div class="container is-fluid px-3">
+          <h1 class="title is-2 is-size-3-mobile has-text-centered mb-4 mb-5-tablet main-title">🎮 TTBA Game</h1>
 
           <!-- Socket.IO Connection Status - Discret -->
           <div class="connection-badge" :class="{ 'connected': isConnected, 'disconnected': !isConnected }" :title="isConnected ? 'Connecté au backend' : (serverError || 'Connexion en cours...')">
@@ -37,7 +37,7 @@
             <!-- Info room pour l'hôte -->
             <div class="host-room-info box mb-4 bg-surface rounded has-shadow">
               <div class="room-code-display">
-                <span class="label">Code de la room:</span>
+                <span class="label is-size-7-mobile">Code de la room:</span>
                 <span class="room-code-big">{{ roomCode }}</span>
                 <button
                   class="button is-small is-info"
@@ -54,9 +54,9 @@
             </div>
 
             <div class="initGame" v-if="!isRunningGame">
-              <div class="columns">
+              <div class="columns is-mobile is-multiline">
                 <!-- Left Column: Upload -->
-                <div class="column is-half">
+                <div class="column is-12-mobile is-half-tablet">
                   <UploadPanel
                     :is-processing="fileState.isProcessing"
                     :progress="fileState.progress"
@@ -77,7 +77,7 @@
                 </div>
 
                 <!-- Right Column: Players -->
-                <div class="column is-half">
+                <div class="column is-12-mobile is-half-tablet">
                   <PlayersList
                     :players="players"
                     @remove="handleRemovePlayer"
@@ -87,7 +87,7 @@
               </div>
               <div v-if="players.length > 0" class="mt-4">
                 <button
-                  class="button is-fullwidth is-success launch-btn"
+                  class="button is-fullwidth is-success is-large-mobile launch-btn"
                   @click="runNewGame"
                 >
                   🚀 Lancer la partie
@@ -127,6 +127,11 @@
         </div>
       </div>
     </section>
+
+    <!-- Version Badge - Bottom Right -->
+    <div class="version-badge" title="Version de l'application">
+      v{{ version }}
+    </div>
   </div>
 </template>
 
@@ -137,6 +142,7 @@ import { useExtraction } from '@/composables/useExtraction'
 import { useGameStore } from '@/composables/useGameStore'
 import { useGameLogic } from '@/composables/useGameLogic'
 import { useSocket } from '@/composables/useSocket'
+import { useAppVersion } from '@/composables/useAppVersion'
 import { isTikTokShare } from '@/utils/helpers'
 import UploadPanel from '@/components/UploadPanel.vue'
 import OptionsPanel from '@/components/OptionsPanel.vue'
@@ -153,6 +159,9 @@ const guestViewRef = ref<InstanceType<typeof GuestView> | null>(null)
 const guestPlayers = ref<any[]>([])
 const copyButtonText = ref('📋 Copier')
 const isCopying = ref(false)
+
+// App version
+const { version } = useAppVersion()
 
 // Composables
 const { fileState, processFiles } = useFileHandling()
@@ -826,7 +835,7 @@ function triggerConfetti(duration = 1200) {
 }
 
 .hero.is-gradient {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: var(--grad-primary);
   position: relative;
   overflow: hidden;
 }
@@ -954,7 +963,7 @@ function triggerConfetti(duration = 1200) {
 }
 
 .connection-badge.connected {
-  background: #48bb78;
+  background: var(--color-accent);
   box-shadow: 0 0 12px rgba(72, 187, 120, 0.6), 0 2px 8px rgba(0, 0, 0, 0.2);
 }
 
@@ -963,7 +972,7 @@ function triggerConfetti(duration = 1200) {
 }
 
 .connection-badge.disconnected {
-  background: #f56565;
+  background: var(--color-danger);
   box-shadow: 0 0 12px rgba(245, 101, 101, 0.6), 0 2px 8px rgba(0, 0, 0, 0.2);
   animation: pulse-red 2s infinite;
 }
@@ -982,7 +991,7 @@ function triggerConfetti(duration = 1200) {
 }
 
 .launch-btn {
-  background: linear-gradient(135deg, #48bb78 0%, #38a169 100%) !important;
+  background: var(--grad-success) !important;
   border: none;
   font-weight: 800;
   font-size: 1.3rem;
@@ -990,6 +999,7 @@ function triggerConfetti(duration = 1200) {
   transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
   position: relative;
   overflow: hidden;
+  color: white !important;
 }
 
 .launch-btn::before {
@@ -1020,51 +1030,87 @@ button[disabled] {
 /* Styles pour la vue hôte */
 .host-room-info {
   display: flex;
+  flex-direction: row;
   justify-content: space-between;
   align-items: center;
   padding: 1.5rem;
-  background: rgba(255, 255, 255, 0.95);
-  border-radius: 12px;
-  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+  background: var(--color-surface);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-soft);
+  border: 1px solid var(--color-border);
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+@media screen and (max-width: 768px) {
+  .host-room-info {
+    flex-direction: column;
+    padding: 1rem;
+    gap: 1rem;
+  }
 }
 
 .room-code-display {
   display: flex;
   align-items: center;
-  gap: 1rem;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+@media screen and (max-width: 768px) {
+  .room-code-display {
+    flex-direction: column;
+    width: 100%;
+    gap: 0.75rem;
+  }
 }
 
 .room-code-display .label {
   font-weight: 600;
-  color: #666;
+  color: var(--color-text);
   margin: 0;
 }
 
 .room-code-big {
   font-size: 2rem;
   font-weight: 900;
-  color: #667eea;
+  color: var(--color-primary);
   letter-spacing: 4px;
   padding: 0.5rem 1.5rem;
   background: linear-gradient(135deg, rgba(102, 126, 234, 0.15) 0%, rgba(118, 75, 162, 0.15) 100%);
-  border-radius: 12px;
-  border: 2px solid #667eea;
+  border-radius: var(--radius-md);
+  border: 2px solid var(--color-primary);
+}
+
+@media screen and (max-width: 768px) {
+  .room-code-big {
+    font-size: 1.5rem;
+    letter-spacing: 2px;
+    padding: 0.5rem 1rem;
+  }
+}
+
+@media (prefers-color-scheme: light) {
+  .host-room-info {
+    background: rgba(255, 255, 255, 0.98);
+  }
 }
 
 /* Amélioration de l'affichage du score */
 .score-display {
-  background: linear-gradient(135deg, rgba(102, 126, 234, 0.12) 0%, rgba(118, 75, 162, 0.12) 100%);
+  background: linear-gradient(135deg, rgba(102, 126, 234, 0.15) 0%, rgba(118, 75, 162, 0.15) 100%);
   padding: 0.8rem 1.5rem !important;
-  border-radius: 10px;
-  border: 2px solid rgba(102, 126, 234, 0.3);
+  border-radius: var(--radius-sm);
+  border: 2px solid var(--color-primary);
   font-size: 1.3rem !important;
   font-weight: 800 !important;
-  color: #667eea;
-  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.15);
+  color: var(--color-primary);
+  box-shadow: var(--shadow-soft);
 }
 
 .score-display .score-correct {
-  color: #48bb78;
+  color: var(--color-accent);
   font-size: 1.5rem;
   font-weight: 900;
 }
@@ -1094,6 +1140,59 @@ button[disabled] {
   0% { transform: scale(1); }
   50% { transform: scale(1.15) rotate(-5deg); }
   100% { transform: scale(1) rotate(0); }
+}
+
+/* Version Badge - Bottom Right */
+.version-badge {
+  position: fixed;
+  bottom: 16px;
+  right: 16px;
+  background: rgba(102, 126, 234, 0.1);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  color: var(--color-text-muted);
+  font-size: 0.75rem;
+  font-weight: 600;
+  padding: 0.35rem 0.75rem;
+  border-radius: var(--radius-sm);
+  border: 1px solid rgba(102, 126, 234, 0.2);
+  z-index: 999;
+  opacity: 0.7;
+  transition: all 0.3s ease;
+  cursor: default;
+  user-select: none;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.version-badge:hover {
+  opacity: 1;
+  transform: translateY(-2px);
+  background: rgba(102, 126, 234, 0.15);
+  border-color: rgba(102, 126, 234, 0.3);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+@media (prefers-color-scheme: dark) {
+  .version-badge {
+    background: rgba(102, 126, 234, 0.15);
+    border-color: rgba(102, 126, 234, 0.3);
+    color: rgba(255, 255, 255, 0.7);
+  }
+
+  .version-badge:hover {
+    background: rgba(102, 126, 234, 0.25);
+    border-color: rgba(102, 126, 234, 0.4);
+    color: rgba(255, 255, 255, 0.9);
+  }
+}
+
+@media screen and (max-width: 768px) {
+  .version-badge {
+    bottom: 12px;
+    right: 12px;
+    font-size: 0.7rem;
+    padding: 0.3rem 0.6rem;
+  }
 }
 </style>
 
